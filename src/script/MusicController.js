@@ -6,6 +6,12 @@ function playMusic() {}
 // 暂停音乐
 function pauseMusic() {}
 
+// 导出所有函数
+export {
+  playMusic,
+  pauseMusic
+}
+
 // document.addEventListener('DOMContentLoaded', function() {
 //   const audio = document.getElementById('bgMusic');
 //   const volumeBtn = document.getElementById('volumeBtn');
