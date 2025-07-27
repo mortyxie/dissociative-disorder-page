@@ -5,5 +5,5 @@
 </template>
 
 <script setup>
-import BrowserVersion from "/src/components/BrowserVersion.vue";
+import BrowserVersion from "/src/components/layout/BrowserVersion.vue";
 </script>

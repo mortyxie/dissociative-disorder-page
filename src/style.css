@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* 确保浏览器原生 tooltip 使用项目字体 */
+[title] {
+  position: relative;
+}
+
+/* 为带有 title 属性的元素应用字体样式 */
+button[title],
+img[title],
+div[title],
+span[title] {
+  font-family: "BoutiqueBitmap9x9", "Courier New", monospace;
+}

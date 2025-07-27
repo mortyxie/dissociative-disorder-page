@@ -1,16 +1,25 @@
 <template>
-  <div class="flex items-center justify-center">
-    <div class="font-mono text-4xl font-bold text-gray-800">
-      {{ formattedTime }}
-    </div>
+  <div :style="countdownStyle">
+    {{ formattedTime }}
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { createAspectRatioAwareCountdownStyle } from "/src/config/theme.js";
+import browserVersionController from "/src/script/BrowserVersionController.js";
 
-// 目标时间戳: 2071年7月29日
-const targetTimestamp = new Date("2071-07-29T00:00:00Z").getTime();
+// 获取设备类型
+const { deviceType } = browserVersionController.getReactiveData();
+
+// 计算倒计时样式
+const countdownStyle = computed(() => {
+  const device = deviceType.value === "mobile" ? "mobile" : "desktop";
+  return createAspectRatioAwareCountdownStyle(device);
+});
+
+// 目标时间戳: 2071年7月29日 00:00:00 (本地时间)
+const targetTimestamp = new Date("2071-07-29T00:00:00").getTime();
 
 // 响应式时间显示
 const formattedTime = ref("0000:00:00:00");

@@ -11,25 +11,72 @@ function parseCSV(csvText) {
   const lines = csvText.trim().split('\n')
   if (lines.length === 0) return {}
   
-  // 解析头部，去除空格和回车符
-  const headers = lines[0].split(',').map(header => header.trim())
+  // 解析 CSV 行，支持双引号包围的字段
+  function parseCSVLine(line) {
+    const result = []
+    let current = ''
+    let inQuotes = false
+    let i = 0
+    
+    while (i < line.length) {
+      const char = line[i]
+      const nextChar = line[i + 1]
+      
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // 转义的双引号 ("") -> 单个双引号
+          current += '"'
+          i += 2
+        } else {
+          // 开始或结束引号
+          inQuotes = !inQuotes
+          i++
+        }
+      } else if (char === ',' && !inQuotes) {
+        // 字段分隔符（不在引号内）
+        result.push(current.trim())
+        current = ''
+        i++
+      } else {
+        // 普通字符
+        current += char
+        i++
+      }
+    }
+    
+    // 添加最后一个字段
+    result.push(current.trim())
+    
+    return result
+  }
+  
+  // 解析头部
+  const headers = parseCSVLine(lines[0])
   
   // 初始化语言对象
   const languages = {}
   headers.slice(1).forEach(lang => {
-    languages[lang] = {}
+    if (lang) { // 忽略空的语言列
+      languages[lang] = {}
+    }
   })
   
   // 处理数据行
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(value => value.trim()) // 去除每个值的空格和回车符
+    if (!lines[i].trim()) continue // 跳过空行
+    
+    const values = parseCSVLine(lines[i])
     const key = values[0]
     
     if (key) { // 确保 key 不为空
       // 为每种语言添加翻译
       headers.slice(1).forEach((lang, index) => {
-        const value = values[index + 1] || ''
-        languages[lang][key] = value.replace(/\r/g, '') // 移除回车符
+        if (lang && languages[lang] !== undefined) { // 确保语言列存在
+          const value = values[index + 1] || ''
+          // 处理换行符：将 \n 替换为实际的换行符，同时移除回车符
+          const processedValue = value.replace(/\r/g, '').replace(/\\n/g, '\n')
+          languages[lang][key] = processedValue
+        }
       })
     }
   }
