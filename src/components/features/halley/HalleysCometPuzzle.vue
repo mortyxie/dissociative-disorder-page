@@ -2,7 +2,7 @@
   <div class="halley-comet-puzzle">
     <!-- 解密触发按钮 - 位置在语言切换下面 -->
     <button v-show="!hidden" @click="openPuzzle" class="puzzle-trigger-button">
-      <span class="puzzle-icon">☄️</span>
+      <div class="moon-icon"></div>
     </button>
 
     <!-- 解密输入框模态窗口 -->
@@ -299,14 +299,45 @@ onUnmounted(() => {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* 解密图标样式 */
-.puzzle-icon {
-  font-size: 20px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* 解密图标样式 - 月亮效果 */
+.moon-icon {
+  width: 24px;
+  height: 24px;
+  background: #ffffff;
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6),
+    0 0 16px rgba(255, 255, 255, 0.4), 0 0 24px rgba(255, 255, 255, 0.2);
 }
 
-.puzzle-trigger-button:hover .puzzle-icon {
-  transform: rotate(15deg) scale(1.1);
+.puzzle-trigger-button:hover .moon-icon {
+  transform: scale(1.1);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.9),
+    0 0 32px rgba(255, 255, 255, 0.7), 0 0 48px rgba(255, 255, 255, 0.5),
+    0 0 64px rgba(255, 255, 255, 0.3), 0 0 80px rgba(255, 255, 255, 0.1);
+  animation: moonGlow 2s ease-in-out infinite alternate;
+}
+
+.puzzle-trigger-button:active .moon-icon {
+  transform: scale(0.95);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.8),
+    0 0 60px rgba(255, 255, 255, 0.6), 0 0 80px rgba(255, 255, 255, 0.4),
+    0 0 100px rgba(255, 255, 255, 0.2);
+}
+
+/* 月亮发光动画 */
+@keyframes moonGlow {
+  from {
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.9),
+      0 0 32px rgba(255, 255, 255, 0.7), 0 0 48px rgba(255, 255, 255, 0.5),
+      0 0 64px rgba(255, 255, 255, 0.3), 0 0 80px rgba(255, 255, 255, 0.1);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 1),
+      0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.6),
+      0 0 80px rgba(255, 255, 255, 0.4), 0 0 100px rgba(255, 255, 255, 0.2);
+  }
 }
 
 /* 模态窗口样式 */
@@ -448,8 +479,9 @@ onUnmounted(() => {
     height: 44px;
   }
 
-  .puzzle-icon {
-    font-size: 18px;
+  .moon-icon {
+    width: 20px;
+    height: 20px;
   }
 
   .puzzle-content {

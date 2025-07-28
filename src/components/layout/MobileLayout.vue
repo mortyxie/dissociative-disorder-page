@@ -62,19 +62,19 @@
     <LanguageSlidePanel />
 
     <!-- Rain of Love 功能 - 移动端 -->
-    <RainOfLoveFeature />
+    <RainOfLoveFeature :hidden="isLanguagePanelOpen" />
 
     <!-- Steam 功能 - 移动端 -->
-    <SteamFeature />
+    <SteamFeature :hidden="isLanguagePanelOpen" />
 
     <!-- 社交媒体功能 - 移动端 -->
-    <SocialMediaFeature />
+    <SocialMediaFeature :hidden="isLanguagePanelOpen" />
 
     <!-- 哈雷彗星倒计时组件 -->
     <HalleysCometCountDown />
 
     <!-- 哈雷彗星解密组件 -->
-    <HalleysCometPuzzle />
+    <HalleysCometPuzzle :hidden="isLanguagePanelOpen" />
 
     <!-- 点击弹出文本组件 - 全屏交互 -->
     <ClickPopText />
@@ -110,6 +110,9 @@ const { deviceType, screenWidth } = browserVersionController.getReactiveData();
 
 // 解密成功状态控制
 const isUnlocked = ref(false);
+
+// 语言面板开关状态
+const isLanguagePanelOpen = ref(false);
 
 // 星星背景数据
 const stars = ref([]);
@@ -174,13 +177,26 @@ onMounted(() => {
 
   // 监听解密成功事件
   window.addEventListener("halleysCometSolved", handlePuzzleSolved);
+
+  // 监听语言面板状态变化事件
+  window.addEventListener("languagePanelToggle", handleLanguagePanelToggle);
 });
+
+// 监听语言面板全局事件
+const handleLanguagePanelToggle = (event) => {
+  isLanguagePanelOpen.value = event.detail.isOpen;
+  console.log(
+    "移动端布局接收到语言面板状态变化:",
+    event.detail.isOpen ? "打开" : "关闭"
+  );
+};
 
 onUnmounted(() => {
   console.log("MobileWeb 组件已卸载");
 
   // 清理事件监听器
   window.removeEventListener("halleysCometSolved", handlePuzzleSolved);
+  window.removeEventListener("languagePanelToggle", handleLanguagePanelToggle);
 
   // 清理音乐资源
   cleanupMusic();
