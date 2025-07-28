@@ -88,29 +88,23 @@ function parseCSV(csvText) {
 async function loadCSV(csvFileName) {
   try {
     const csvPath = CSV_FILES[csvFileName]
-    // console.log(`正在加载 CSV 文件: ${csvFileName}, 路径: ${csvPath}`)
     
     if (!csvPath) {
-      // throw new Error(`CSV file '${csvFileName}' not found`)
+      throw new Error(`CSV file '${csvFileName}' not found`)
     }
     
     const response = await fetch(csvPath)
-    // console.log(`CSV 文件响应状态: ${response.status}`)
     
     if (!response.ok) {
-      // throw new Error(`Failed to fetch ${csvPath}: ${response.status}`)
+      throw new Error(`Failed to fetch ${csvPath}: ${response.status}`)
     }
     
     const csvText = await response.text()
-    // console.log(`CSV 文件内容: ${csvText.substring(0, 100)}...`)
     
     const result = parseCSV(csvText)
-    // console.log(`解析后的 CSV 数据:`, result)
     
     return result
   } catch (error) {
-    // console.error(`Error loading CSV file '${csvFileName}':`, error)
-    // 返回默认的空语言对象
     return {
       'zh-cn': {},
       'zh-mo': {},

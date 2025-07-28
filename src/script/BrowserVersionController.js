@@ -51,8 +51,6 @@ class BrowserVersionController {
     
     // 如果设备类型发生变化，触发回调
     this.notifyCallbacks()
-    
-    console.log(`设备检测结果: ${newDeviceType}, 屏幕宽度: ${width}px`)
   }
 
   // 窗口大小变化处理

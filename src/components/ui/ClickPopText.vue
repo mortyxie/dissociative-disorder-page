@@ -138,12 +138,9 @@ const handleClick = (event) => {
   const clickX = event.clientX;
   const clickY = event.clientY;
 
-  console.log(`页面点击位置: (${clickX}, ${clickY})`);
-
   // 如果有正在运行的隐藏定时器，清除它
   if (hideTimeout.value) {
     clearTimeout(hideTimeout.value);
-    console.log("清除之前的隐藏定时器");
   }
 
   // 触发文本更新
@@ -159,10 +156,7 @@ const handleClick = (event) => {
   hideTimeout.value = setTimeout(() => {
     showPopText.value = false;
     hideTimeout.value = null;
-    console.log("文本自动隐藏");
   }, 3000);
-
-  console.log("设置新的2秒隐藏定时器");
 };
 
 // 动画钩子函数

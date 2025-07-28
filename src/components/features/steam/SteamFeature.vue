@@ -91,7 +91,6 @@ const handleLanguageChange = async () => {
 
 // 打开Steam模态窗口
 const openSteamModal = () => {
-  console.log("Steam 模态窗口被打开");
   isModalOpen.value = true;
 };
 

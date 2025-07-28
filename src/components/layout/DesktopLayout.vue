@@ -121,14 +121,11 @@ const generateStars = () => {
 const checkUnlockStatus = () => {
   // 每次浏览器刷新后都重置为 false，不从 localStorage 读取
   isUnlocked.value = false;
-  console.log("解密状态重置为:", isUnlocked.value);
 };
 
 // 监听解密成功事件
 const handlePuzzleSolved = (event) => {
-  console.log("收到解密成功事件", event.detail);
   isUnlocked.value = true;
-  console.log("解密状态已更新为:", isUnlocked.value);
 };
 
 // 创建通用的PNG图片样式计算函数 - 使用宽高比适配
@@ -141,20 +138,8 @@ const logoStyle = computed(() => createImageStyle("logo"));
 const muyangStyle = computed(() => createImageStyle("muyang"));
 const xingyuStyle = computed(() => createImageStyle("xingyu"));
 
-// 监听解密状态变化
-watch(isUnlocked, (newValue, oldValue) => {
-  console.log(`解密状态变化: ${oldValue} -> ${newValue}`);
-  if (newValue) {
-    console.log("XingYu PNG 应该显示了");
-  } else {
-    console.log("XingYu PNG 应该隐藏了");
-  }
-});
-
 // 生命周期钩子
 onMounted(() => {
-  console.log("DesktopWeb 组件已挂载");
-
   // 生成星星背景
   generateStars();
 
@@ -169,7 +154,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  console.log("DesktopWeb 组件已卸载");
   // 清理事件监听器
   window.removeEventListener("halleysCometSolved", handlePuzzleSolved);
 

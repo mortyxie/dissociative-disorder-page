@@ -10,7 +10,6 @@ async function initApp() {
   try {
     // 首先初始化语言控制器
     await languageController.initialize()
-    console.log('语言控制器初始化完成')
     
     // 创建并挂载Vue应用
     const app = createApp(App)
@@ -18,9 +17,7 @@ async function initApp() {
     
     // 向全局暴露所有控制器，方便调试
     window.Controllers = Controllers
-    
-    console.log('应用初始化完成')
-    console.log('可用的控制器:', Object.keys(Controllers))
+
   } catch (error) {
     console.error('应用初始化失败:', error)
   }

@@ -77,13 +77,10 @@ const initTranslations = async () => {
 // 切换社交媒体面板
 const toggleSocialPanel = () => {
   isExpanded.value = !isExpanded.value;
-  console.log("社交媒体面板", isExpanded.value ? "展开" : "收起");
 };
 
 // 打开社交媒体链接
 const openSocialLink = (url) => {
-  console.log(`打开社交媒体链接: ${url}`);
-
   try {
     if (props.openInNewTab) {
       // 在新标签页中打开链接

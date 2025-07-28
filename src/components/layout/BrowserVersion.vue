@@ -18,11 +18,7 @@ import browserVersionController from "/src/script/BrowserVersionController.js";
 const { isDesktop } = browserVersionController.getReactiveData();
 
 // 生命周期钩子（如果需要额外的初始化逻辑）
-onMounted(() => {
-  console.log("BrowserVersion 组件已挂载");
-});
+onMounted(() => {});
 
-onUnmounted(() => {
-  console.log("BrowserVersion 组件已卸载");
-});
+onUnmounted(() => {});
 </script>

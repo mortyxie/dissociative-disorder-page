@@ -151,21 +151,16 @@ const checkUnlockStatus = () => {
   const solved = localStorage.getItem("halleysCometSolved");
   if (solved === "true") {
     isUnlocked.value = true;
-    console.log("检测到解密状态: 已解密");
   }
 };
 
 // 监听解密成功事件
 const handlePuzzleSolved = (event) => {
-  console.log("收到解密成功事件", event.detail);
   isUnlocked.value = true;
-  console.log("解密状态已更新为:", isUnlocked.value);
 };
 
 // 生命周期钩子
 onMounted(() => {
-  console.log("MobileWeb 组件已挂载");
-
   // 生成星星背景
   generateStars();
 
@@ -185,15 +180,9 @@ onMounted(() => {
 // 监听语言面板全局事件
 const handleLanguagePanelToggle = (event) => {
   isLanguagePanelOpen.value = event.detail.isOpen;
-  console.log(
-    "移动端布局接收到语言面板状态变化:",
-    event.detail.isOpen ? "打开" : "关闭"
-  );
 };
 
 onUnmounted(() => {
-  console.log("MobileWeb 组件已卸载");
-
   // 清理事件监听器
   window.removeEventListener("halleysCometSolved", handlePuzzleSolved);
   window.removeEventListener("languagePanelToggle", handleLanguagePanelToggle);

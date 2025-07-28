@@ -17,7 +17,6 @@ const CORRECT_ANSWER = "20710729";
 
 // 初始化哈雷彗星解密功能
 function initHalleysCometPuzzle() {
-  console.log("哈雷彗星解密系统初始化...");
   
   puzzleState.isInitialized = true;
   puzzleState.startTime = Date.now();
@@ -36,8 +35,6 @@ function initHalleysCometPuzzle() {
   
   puzzleState.isSolved = false;
   
-  console.log("哈雷彗星解密系统已准备就绪");
-  
   return true;
 }
 
@@ -53,9 +50,6 @@ function validateAnswer(inputAnswer) {
   // 持久化尝试次数
   localStorage.setItem('halleysCometAttempts', puzzleState.attempts.toString());
   
-  // 记录尝试
-  console.log(`第 ${puzzleState.attempts} 次尝试:`, inputAnswer);
-  
   if (inputAnswer === CORRECT_ANSWER) {
     return true;
   }
@@ -66,7 +60,6 @@ function validateAnswer(inputAnswer) {
 // 解密成功处理
 function solveHalleysPuzzle() {
   if (puzzleState.isSolved) {
-    console.log("哈雷彗星解密已经完成过了");
     return;
   }
   
@@ -74,17 +67,9 @@ function solveHalleysPuzzle() {
   puzzleState.solveTime = Date.now();
   
   const solveTimeSeconds = Math.round((puzzleState.solveTime - puzzleState.startTime) / 1000);
-  
-  console.log("🎉 哈雷彗星解密成功！");
-  console.log(`解密答案: ${CORRECT_ANSWER}`);
-  console.log(`尝试次数: ${puzzleState.attempts}`);
-  console.log(`用时: ${solveTimeSeconds} 秒`);
-  console.log("解密说明: 20710729 代表 2071年7月29日 - 哈雷彗星下次回归地球的日期");
-  
   // 🎵 播放庆祝音乐
   try {
     playMusic();
-    console.log("🎵 解密成功，开始播放庆祝音乐");
   } catch (error) {
     console.error("音乐播放失败:", error);
   }
@@ -159,7 +144,6 @@ function resetPuzzle() {
   
   localStorage.removeItem('halleysCometPuzzleSolved');
   localStorage.removeItem('halleysCometAttempts');
-  console.log("哈雷彗星解密状态已重置");
 }
 
 // 获取提示信息

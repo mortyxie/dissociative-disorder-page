@@ -33,21 +33,15 @@ const isLanguagePanelOpen = ref(false);
 // 监听语言面板全局事件
 const handleLanguagePanelToggle = (event) => {
   isLanguagePanelOpen.value = event.detail.isOpen;
-  console.log(
-    "侧边栏接收到语言面板状态变化:",
-    event.detail.isOpen ? "打开" : "关闭"
-  );
 };
 
 // 生命周期
 onMounted(() => {
-  console.log("SideBar 组件已挂载");
   // 监听全局语言面板状态变化事件
   window.addEventListener("languagePanelToggle", handleLanguagePanelToggle);
 });
 
 onUnmounted(() => {
-  console.log("SideBar 组件已卸载");
   // 清理事件监听器
   window.removeEventListener("languagePanelToggle", handleLanguagePanelToggle);
 });
