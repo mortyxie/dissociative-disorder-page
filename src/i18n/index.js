@@ -1,9 +1,11 @@
 import { createI18n } from 'vue-i18n'
+import LanguagesCSV from '/src/i18n/csv/Languages.csv?raw'
+import ClickPopTextCSV from '/src/i18n/csv/ClickPopText.csv?raw'
 
 // 可用的 CSV 文件列表
 const CSV_FILES = {
-  languages: '/src/i18n/csv/Languages.csv',
-  ClickPopText: '/src/i18n/csv/ClickPopText.csv'
+  languages: LanguagesCSV,
+  ClickPopText: ClickPopTextCSV
 }
 
 // 解析 CSV 内容为 JSON 对象
@@ -87,22 +89,9 @@ function parseCSV(csvText) {
 // 加载指定的 CSV 文件
 async function loadCSV(csvFileName) {
   try {
-    const csvPath = CSV_FILES[csvFileName]
-    
-    if (!csvPath) {
-      throw new Error(`CSV file '${csvFileName}' not found`)
-    }
-    
-    const response = await fetch(csvPath)
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${csvPath}: ${response.status}`)
-    }
-    
-    const csvText = await response.text()
-    
+    const csvText = CSV_FILES[csvFileName]
+    if (!csvText) throw new Error(`CSV file '${csvFileName}' not found`)
     const result = parseCSV(csvText)
-    
     return result
   } catch (error) {
     return {
@@ -114,19 +103,16 @@ async function loadCSV(csvFileName) {
 }
 
 // 加载所有 CSV 文件并合并
-async function loadAllLanguages() {
+function loadAllLanguages() {
   try {
     const csvFiles = Object.keys(CSV_FILES)
-    const promises = csvFiles.map(fileName => loadCSV(fileName))
-    const results = await Promise.all(promises)
-    
+    const results = csvFiles.map(fileName => parseCSV(CSV_FILES[fileName]))
     // 合并所有语言数据
     const mergedLanguages = {
       'zh-cn': {},
       'zh-mo': {},
       'en': {}
     }
-    
     results.forEach(langData => {
       Object.keys(langData).forEach(lang => {
         if (mergedLanguages[lang]) {
@@ -134,7 +120,6 @@ async function loadAllLanguages() {
         }
       })
     })
-    
     return mergedLanguages
   } catch (error) {
     console.error('Error loading all languages:', error)

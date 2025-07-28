@@ -148,15 +148,6 @@ function resetPuzzle() {
 
 // 获取提示信息
 function getHint(attemptCount = 0) {
-  const hints = [
-    "B42L8 - 寻找与哈雷彗星相关的8位数字",
-    "这个数字与时间有关...",
-    "想想哈雷彗星多久回归一次？",
-    "格式: YYYYMMDD",
-    "哈雷彗星上次来访是1986年，下次是什么时候？",
-    "周期大约是75-76年..."
-  ];
-  
   const index = Math.min(attemptCount, hints.length - 1);
   return hints[index];
 }

@@ -13,7 +13,7 @@
     <transition name="social-panel">
       <div v-if="isExpanded" class="social-panel">
         <button
-          v-for="(platform, key) in socialMediaConfig.socialMediaLinks"
+          v-for="(platform, key) in socialMediaLinks"
           :key="key"
           @click="openSocialLink(platform.url)"
           class="social-item-button"
@@ -30,7 +30,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { getColor, getFontConfig } from "/src/config/theme.js";
-import socialMediaConfig from "/src/config/socialMediaConfig.json";
+import { socialMediaLinks } from "/src/config/socialMediaConfig.js";
 import languageController from "/src/script/LanguageController.js";
 
 // Props 定义

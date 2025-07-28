@@ -242,6 +242,7 @@ onUnmounted(() => {
   text-align: center;
   font-family: v-bind('`"${fontConfig.family}", ${fontConfig.fallback}`');
   margin-bottom: 8px;
+  letter-spacing: 0.12em;
 }
 
 /* 介绍文本样式 */

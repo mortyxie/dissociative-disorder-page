@@ -1,4 +1,5 @@
 // 此脚本控制音乐播放
+import musicUrl from '/src/assets/music/Roche_loop.mp3'
 
 // 音频实例
 let audioInstance = null;
@@ -7,7 +8,7 @@ let isPlaying = false;
 // 初始化音频
 function initAudio() {
   if (!audioInstance) {
-    audioInstance = new Audio('/src/assets/music/Roche_loop.mp3');
+    audioInstance = new Audio(musicUrl);
     audioInstance.loop = true; // 循环播放
     audioInstance.volume = 0.5; // 设置音量为50%
     
