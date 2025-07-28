@@ -35,19 +35,19 @@ export const aspectRatioConfigs = {
     '9:18': {
       fontSizeAdjustment: 0.95,
       widthAdjustment: 0.9,
-      heightAdjustment: 1.1,
-      positionAdjustment: { top: '2%', left: '2%', right: '2%' }
+      heightAdjustment: 1.0,  // 禁用高度拉伸，避免图片畸变
+      positionAdjustment: { top: '2%', left: 0, right: '2%' }  // left改为0，保持倒计时居中
     },
     '9:19.5': {
       fontSizeAdjustment: 0.9,
       widthAdjustment: 0.85,
-      heightAdjustment: 1.15,
-      positionAdjustment: { top: '3%', left: '3%', right: '3%' }
+      heightAdjustment: 1.0,  // 禁用高度拉伸，避免图片畸变
+      positionAdjustment: { top: '3%', left: 0, right: '3%' }  // left改为0，保持倒计时居中
     },
     '3:4': {
       fontSizeAdjustment: 1.1,
       widthAdjustment: 1.2,
-      heightAdjustment: 0.8,
+      heightAdjustment: 1.0,  // 禁用高度拉伸，避免图片畸变
       positionAdjustment: { top: '1%', left: '-2%', right: '-2%' }
     }
   }
@@ -208,7 +208,7 @@ export const themeConfig = {
         maxFontSize: '4rem',       // 最大字体大小
         position: {
           top: '10%',
-          left: '24%'
+          left: '24%'              
         },
         transform: 'translateX(-50%)', // 水平居中
         zIndex: 20
@@ -320,7 +320,7 @@ export const themeConfig = {
         minFontSize: '1rem',       // 移动端最小字体大小
         maxFontSize: '2.5rem',     // 移动端最大字体大小
         position: {
-          top: '20%',
+          top: '5%',
           left: '50%'
         },
         transform: 'translateX(-50%)',
@@ -330,27 +330,43 @@ export const themeConfig = {
 
       // 移动端PNG图片配置 - 使用响应式尺寸和宽高比适配
       images: {
+        logo: {
+          // 基础尺寸配置
+          width: '25vw',           // 移动端logo较大一些
+          scale: 1.4,              // 适当缩放
+          minWidth: '120px',       // 最小宽度
+          maxWidth: '200px',       // 最大宽度
+          rotation: 0,             // 无旋转
+          zIndex: 10,
+          position: {
+            top: '60%',            // 移动端位置调整
+            left: '15%'            // 水平居中，transform在createResponsiveImageStyle中处理
+          }
+          // 注意：aspectRatioConfig 现在使用共享配置 aspectRatioConfigs.mobile
+        },
         muyang: {
           width: '40vw',           
+          scale: 5.0,              // 添加缩放参数
           minWidth: '150px',       
           maxWidth: '300px',       
-          rotation: 10,
+          rotation: 0,            // 恢复旋转，与桌面端一致
           zIndex: 1,
           position: {
-            top: '5%',
-            left: '5%'
+            top: '40%',
+            left: '40%'            // 使用相同的left定位
           }
           // 注意：aspectRatioConfig 现在使用共享配置 aspectRatioConfigs.mobile
         },
         xingyu: {
-          width: '35vw',           
-          minWidth: '120px',       
-          maxWidth: '250px',       
-          rotation: -8,
+          width: '40vw',           
+          scale: 5.0,              // 添加缩放参数
+          minWidth: '150px',       
+          maxWidth: '300px',       
+          rotation: 0,            // 恢复旋转，与桌面端一致
           zIndex: 1,
           position: {
-            top: '15%',
-            right: '5%'
+            top: '40%',
+            left: '40%'            // 改为left，与muyang完全重叠
           }
           // 注意：aspectRatioConfig 现在使用共享配置 aspectRatioConfigs.mobile
         }
@@ -409,6 +425,11 @@ export const createResponsiveImageStyle = (imageName, device = 'desktop') => {
   // 添加缩放
   if (config.scale) {
     transforms.push(`scale(${config.scale})`);
+  }
+  
+  // 特殊处理logo的居中transform
+  if (imageName === 'logo' && config.position.left === '50%') {
+    transforms.push(`translateX(-50%)`);
   }
 
   const style = {
@@ -640,7 +661,7 @@ export const createAspectRatioAwareImageStyle = (imageName, device = 'desktop') 
   return createAspectRatioAwareStyle(baseStyle, device, {
     adjustFontSize: false,  // 图片不需要调整字体大小
     adjustWidth: true,      // 需要调整宽度
-    adjustHeight: true      // 需要调整高度
+    adjustHeight: device !== 'mobile'  // 移动端禁用高度调整，避免图片畸变
   });
 };
 

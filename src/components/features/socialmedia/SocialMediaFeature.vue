@@ -135,7 +135,7 @@ onUnmounted(() => {
 /* 社交媒体触发按钮样式 */
 .social-trigger-button {
   position: fixed;
-  top: 252px; /* 在 steam 按钮下方，统一间距 (194px + 58px) */
+  top: 236px; /* 在 steam 按钮下方，更紧凑间距 (186px + 50px) */
   right: 20px;
   width: 48px;
   height: 48px;
@@ -204,7 +204,7 @@ onUnmounted(() => {
 /* 社交媒体面板样式 */
 .social-panel {
   position: fixed;
-  top: 308px; /* 触发按钮下方 8px */
+  top: 292px; /* 触发按钮下方 8px (236px + 48px + 8px) */
   right: 20px;
   display: flex;
   flex-direction: column;
@@ -311,7 +311,7 @@ onUnmounted(() => {
   .social-trigger-button {
     width: 44px;
     height: 44px;
-    top: 238px; /* 移动端对应调整 (184px + 54px) */
+    top: 224px; /* 移动端更紧凑间距 (172px + 44px + 8px) */
     right: 16px;
   }
 
@@ -320,7 +320,7 @@ onUnmounted(() => {
   }
 
   .social-panel {
-    top: 290px; /* 移动端面板位置调整 */
+    top: 276px; /* 移动端面板位置调整 (224px + 44px + 8px) */
     right: 16px;
   }
 

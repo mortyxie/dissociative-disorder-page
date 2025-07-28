@@ -22,7 +22,6 @@
           type="text"
           class="puzzle-input"
           :placeholder="placeholderText"
-          maxlength="8"
           autocomplete="off"
         />
 
@@ -71,6 +70,11 @@ const puzzleInput = ref(null);
 const placeholderText = ref("");
 const attemptsText = ref("");
 const hintNumberColor = ref("");
+
+// 防止在清空输入框期间触发检测的标志
+const isClearing = ref(false);
+// 防止重复检测的标志 - 失败后清空之前不允许重复检测
+const isProcessingValidation = ref(false);
 
 // 获取翻译文本的辅助函数
 const getTranslation = async (key) => {
@@ -162,16 +166,35 @@ const closePuzzle = () => {
   inputValue.value = "";
   statusMessage.value = "";
   statusClass.value = "";
+  // 重置所有标志
+  isClearing.value = false;
+  isProcessingValidation.value = false;
 };
 
 // 输入变化处理
 const onInputChange = async () => {
-  // 清除之前的状态信息
-  statusMessage.value = "";
-  statusClass.value = "";
+  // 如果正在清空输入框，跳过检测
+  if (isClearing.value) {
+    return;
+  }
 
-  // 当输入达到8位时自动触发判定
-  if (inputValue.value.length === 8) {
+  // 如果正在处理验证（失败后等待清空），跳过检测避免重复
+  if (isProcessingValidation.value) {
+    return;
+  }
+
+  // 只清除成功状态，保留失败状态的提示信息
+  // 这样用户在失败后重新输入时，失败提示不会消失
+  if (statusClass.value === "success") {
+    statusMessage.value = "";
+    statusClass.value = "";
+  }
+
+  // 当输入达到8位或以上字符时自动触发判定（检测所有字符，不只是数字）
+  if (inputValue.value.length >= 8) {
+    // 设置验证处理标志，防止重复检测
+    isProcessingValidation.value = true;
+
     const isValid = validateAnswer(inputValue.value);
 
     // 更新尝试次数显示
@@ -184,9 +207,13 @@ const onInputChange = async () => {
       // 调用解密成功处理函数
       solveHalleysPuzzle();
 
+      // 成功时重置验证标志
+      isProcessingValidation.value = false;
+
+      // 缩短成功界面自动关闭时间为1秒
       setTimeout(() => {
         closePuzzle();
-      }, 1500);
+      }, 1000);
     } else {
       // 随机选择一个失败消息（1-5）
       const randomIndex = Math.floor(Math.random() * 5) + 1;
@@ -197,6 +224,24 @@ const onInputChange = async () => {
 
       // 更新提示数字颜色
       updateHintNumberColor();
+
+      // 延迟0.5秒清空输入框，避免突兀感，同时防止用户删除字符时重复触发判断
+      setTimeout(() => {
+        isClearing.value = true; // 设置清空标志
+        inputValue.value = "";
+        // 清空完成后，等待一个短暂时间再重置所有标志
+        setTimeout(() => {
+          isClearing.value = false;
+          isProcessingValidation.value = false; // 重置验证标志，允许下次检测
+        }, 50); // 50ms 后重置标志
+      }, 500);
+
+      // 失败时保留hint提示信息，不自动清除，只有关闭组件再打开时才重置
+      // 注释掉自动清除错误状态的逻辑
+      // setTimeout(() => {
+      //   statusMessage.value = "";
+      //   statusClass.value = "";
+      // }, 2000);
     }
   }
 };

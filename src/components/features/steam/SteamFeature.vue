@@ -128,7 +128,7 @@ onUnmounted(() => {
 /* Steam 触发按钮样式 */
 .steam-trigger-button {
   position: fixed;
-  top: 194px; /* 在 rainoflove 按钮下方，统一间距 (136px + 58px) */
+  top: 186px; /* 在 rainoflove 按钮下方，更紧凑间距 (136px + 50px) */
   right: 20px;
   width: 48px;
   height: 48px;
@@ -253,7 +253,7 @@ onUnmounted(() => {
   .steam-trigger-button {
     width: 44px;
     height: 44px;
-    top: 186px; /* 移动端对应调整 */
+    top: 172px; /* 移动端更紧凑间距 (120px + 44px + 8px) */
     right: 16px;
   }
 

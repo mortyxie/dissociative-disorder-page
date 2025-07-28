@@ -63,10 +63,12 @@ onUnmounted(() => {
 /* 侧边栏功能组件布局说明:
  * 1. 语言切换面板 - top: 20px (固定在右上角)
  * 2. 哈雷彗星解密按钮 - top: 78px (语言按钮下方)
- * 3. Rain of Love 按钮 - top: 136px (哈雷按钮下方，统一58px间距)
- * 4. Steam 按钮 - top: 194px (Rain of Love 按钮下方，统一58px间距)
+ * 3. Rain of Love 按钮 - top: 136px (哈雷按钮下方，58px间距)
+ * 4. Steam 按钮 - top: 186px (Rain of Love 按钮下方，50px间距)
+ * 5. Social Media 按钮 - top: 236px (Steam 按钮下方，50px间距)
  * 
- * 按钮间距: 58px (48px按钮高度 + 10px间距)
- * 未来添加新按钮: 下一个位置 = 194px + 58px = 252px
+ * 桌面端按钮间距: 50px (48px按钮高度 + 2px紧凑间距)
+ * 移动端按钮间距: 52px (44px按钮高度 + 8px间距)
+ * 未来添加新按钮: 下一个位置 = 236px + 50px = 286px
  */
 </style>
