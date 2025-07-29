@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* 移动端防止意外滑动，但保留下拉刷新 */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden !important; /* 只禁用横向滚动 */
+    width: 100vw !important;
+    touch-action: pan-y !important; /* 只允许垂直滑动（包括下拉刷新） */
+    -webkit-touch-callout: none !important; /* 禁用长按菜单 */
+    -webkit-user-select: none !important; /* 禁用文本选择 */
+    user-select: none !important; /* 标准属性 */
+    -webkit-tap-highlight-color: transparent !important; /* 禁用点击高亮 */
+  }
+  
+  /* 支持overscroll-behavior的浏览器 - 只禁用横向过度滚动 */
+  @supports (overscroll-behavior: none) {
+    html, body {
+      overscroll-behavior-x: none !important; /* 禁用横向过度滚动 */
+      overscroll-behavior-y: auto !important; /* 保留纵向过度滚动（下拉刷新） */
+    }
+  }
+}
+
+/* 确保浏览器原生 tooltip 使用项目字体 */
+[title] {
+  position: relative;
+}
+
+/* 为带有 title 属性的元素应用字体样式 */
+button[title],
+img[title],
+div[title],
+span[title] {
+  font-family: "BoutiqueBitmap9x9", "Courier New", monospace;
+}
