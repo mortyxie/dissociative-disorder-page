@@ -3,6 +3,7 @@ import xiaohongshuIcon from '/src/assets/svg/xiaohongshu_icon.svg';
 import weiboIcon from '/src/assets/svg/weibo_icon.svg';
 import instagramIcon from '/src/assets/svg/instagram_icon.svg';
 import xIcon from '/src/assets/svg/x_icon.svg';
+import afdianIcon from '/src/assets/svg/afdian_icon.svg';
 
 export const socialMediaLinks = {
   bilibili: {
@@ -29,5 +30,10 @@ export const socialMediaLinks = {
     url: 'https://x.com/XingYu_Star729',
     icon: xIcon,
     color: '#000000',
+  },
+  afdianIcon: {
+    url: 'https://afdian.com/a/rainoflove',
+    icon: afdianIcon,
+    color: '#9E74F6',
   },
 };
