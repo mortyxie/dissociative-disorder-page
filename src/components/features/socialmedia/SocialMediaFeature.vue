@@ -29,9 +29,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { getColor, getFontConfig } from "/src/config/theme.js";
-import { socialMediaLinks } from "/src/config/socialMediaConfig.js";
-import languageController from "/src/script/LanguageController.js";
+import { getColor, getFontConfig } from "@/config/theme.js";
+import { socialMediaLinks } from "@/config/socialMediaConfig.js";
+import languageController from "@/controllers/LanguageController.js";
 
 // Props 定义
 const props = defineProps({

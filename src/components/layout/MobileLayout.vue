@@ -83,18 +83,18 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import ClickPopText from "/src/components/ui/ClickPopText.vue";
-import HalleysCometPuzzle from "/src/components/features/halley/HalleysCometPuzzle.vue";
-import HalleysCometCountDown from "/src/components/features/halley/HalleysCometCountDown.vue";
-import LanguageSlidePanel from "/src/components/features/language/LanguageSlidePanel.vue";
-import RainOfLoveFeature from "/src/components/features/rainoflove/RainOfLoveFeature.vue";
-import SteamFeature from "/src/components/features/steam/SteamFeature.vue";
-import SocialMediaFeature from "/src/components/features/socialmedia/SocialMediaFeature.vue";
-import browserVersionController from "/src/script/BrowserVersionController.js";
+import ClickPopText from "@/components/ui/ClickPopText.vue";
+import HalleysCometPuzzle from "@/components/features/halley/HalleysCometPuzzle.vue";
+import HalleysCometCountDown from "@/components/features/halley/HalleysCometCountDown.vue";
+import LanguageSlidePanel from "@/components/features/language/LanguageSlidePanel.vue";
+import RainOfLoveFeature from "@/components/features/rainoflove/RainOfLoveFeature.vue";
+import SteamFeature from "@/components/features/steam/SteamFeature.vue";
+import SocialMediaFeature from "@/components/features/socialmedia/SocialMediaFeature.vue";
+import browserVersionController from "@/controllers/BrowserVersionController.js";
 import {
   checkMusicPlayState,
   cleanupMusic,
-} from "/src/script/MusicController.js";
+} from "@/controllers/MusicController.js";
 import {
   getStyles,
   getColor,
@@ -103,7 +103,7 @@ import {
   getImageConfig,
   createResponsiveImageStyle,
   createAspectRatioAwareImageStyle,
-} from "/src/config/theme.js";
+} from "@/config/theme.js";
 
 // 直接从控制器获取响应式数据
 const { deviceType, screenWidth } = browserVersionController.getReactiveData();

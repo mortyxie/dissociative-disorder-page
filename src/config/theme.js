@@ -1,5 +1,141 @@
 // 主题配置文件 - 统一管理应用的颜色、样式等设计系统
 
+/**
+ * 设计令牌（单一数据源）
+ * - 供 getColor / getFontConfig 及布局配置使用
+ * - applyDesignTokensToDocument() 会将其同步为 document 上的 CSS 变量，供全局样式与 Tailwind 任意值引用
+ */
+export const colorTokens = {
+  background: {
+    primary: '#312F40',
+    secondary: '#201E28',
+    accent: '#3D3A4F',
+  },
+  text: {
+    primary: '#FFFFFF',
+    secondary: '#1F2937',
+    high_light: '#92D4B8',
+    muted: '#9CA3AF',
+  },
+  ui: {
+    white: '#FFFFFF',
+    border: '#D1D5DB',
+    focus: '#3B82F6',
+    shadow: 'rgba(0, 0, 0, 0.1)',
+  },
+  overlay: {
+    light: 'rgba(255, 255, 255, 0.8)',
+    medium: 'rgba(255, 255, 255, 0.9)',
+    background: 'rgba(255, 255, 255, 0.7)',
+  },
+  dialog: {
+    background: 'rgba(49, 47, 64, 0.95)',
+    border: '#D1D5DB',
+    shadow: 'rgba(0, 0, 0, 0.4)',
+    text: '#FFFFFF',
+  },
+}
+
+/** Compass（/compass）浅色界面：色相与主站紫灰、强调色 high_light 对齐 */
+export const compassColorTokens = {
+  pageBg: '#EDEAF2',
+  surface: '#FFFFFF',
+  surfaceMuted: '#F5F4FA',
+  border: '#D4D0E0',
+  borderSubtle: '#EBE8F2',
+  borderStrong: '#B8B3C9',
+  textHeading: '#252336',
+  textPrimary: '#3D3A52',
+  textSecondary: '#5C5870',
+  textMuted: '#7A758C',
+  textFaint: '#9D99B0',
+  accent: '#92D4B8',
+  accentStrong: '#6BB89A',
+  accentFg: '#163529',
+  accentSurface: 'rgba(146, 212, 184, 0.16)',
+  accentBorder: 'rgba(146, 212, 184, 0.5)',
+  tagBg: 'rgba(61, 58, 79, 0.1)',
+  tagFg: '#5C5870',
+  pillBg: '#F0EEF5',
+  ringFocus: 'rgba(146, 212, 184, 0.35)',
+}
+
+/** 全局顶栏路由切换：基于主色背景的半透明玻璃条 */
+export const navChromeTokens = {
+  chromeBg: 'rgba(49, 47, 64, 0.92)',
+  chromeBorder: 'rgba(255, 255, 255, 0.15)',
+  link: 'rgba(255, 255, 255, 0.82)',
+  linkHover: '#FFFFFF',
+  linkHoverBg: 'rgba(255, 255, 255, 0.1)',
+  divider: 'rgba(255, 255, 255, 0.25)',
+  linkActiveBg: 'rgba(255, 255, 255, 0.12)',
+  shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)',
+}
+
+export const fontTokens = {
+  boutiqueStack:
+    '"BoutiqueBitmap9x9", "Courier New", "Consolas", "Monaco", monospace',
+  uiStack:
+    'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif',
+}
+
+const CSS_VAR_KEYS = [
+  ['--color-bg-primary', colorTokens.background.primary],
+  ['--color-bg-secondary', colorTokens.background.secondary],
+  ['--color-bg-accent', colorTokens.background.accent],
+  ['--color-text-on-dark', colorTokens.text.primary],
+  ['--color-text-primary', colorTokens.text.primary],
+  ['--color-text-secondary', colorTokens.text.secondary],
+  ['--color-accent', colorTokens.text.high_light],
+  ['--color-text-muted', colorTokens.text.muted],
+  ['--color-ui-border', colorTokens.ui.border],
+  ['--color-ui-focus', colorTokens.ui.focus],
+  ['--font-boutique', fontTokens.boutiqueStack],
+  ['--font-ui', fontTokens.uiStack],
+  ['--nav-chrome-bg', navChromeTokens.chromeBg],
+  ['--nav-chrome-border', navChromeTokens.chromeBorder],
+  ['--nav-link', navChromeTokens.link],
+  ['--nav-link-hover', navChromeTokens.linkHover],
+  ['--nav-link-hover-bg', navChromeTokens.linkHoverBg],
+  ['--nav-divider', navChromeTokens.divider],
+  ['--nav-link-active-bg', navChromeTokens.linkActiveBg],
+  ['--nav-shadow', navChromeTokens.shadow],
+  ['--compass-page-bg', compassColorTokens.pageBg],
+  ['--compass-surface', compassColorTokens.surface],
+  ['--compass-surface-muted', compassColorTokens.surfaceMuted],
+  ['--compass-border', compassColorTokens.border],
+  ['--compass-border-subtle', compassColorTokens.borderSubtle],
+  ['--compass-border-strong', compassColorTokens.borderStrong],
+  ['--compass-text-heading', compassColorTokens.textHeading],
+  ['--compass-text-primary', compassColorTokens.textPrimary],
+  ['--compass-text-secondary', compassColorTokens.textSecondary],
+  ['--compass-text-muted', compassColorTokens.textMuted],
+  ['--compass-text-faint', compassColorTokens.textFaint],
+  ['--compass-accent', compassColorTokens.accent],
+  ['--compass-accent-strong', compassColorTokens.accentStrong],
+  ['--compass-accent-fg', compassColorTokens.accentFg],
+  ['--compass-accent-surface', compassColorTokens.accentSurface],
+  ['--compass-accent-border', compassColorTokens.accentBorder],
+  ['--compass-tag-bg', compassColorTokens.tagBg],
+  ['--compass-tag-fg', compassColorTokens.tagFg],
+  ['--compass-pill-bg', compassColorTokens.pillBg],
+  ['--compass-ring-focus', compassColorTokens.ringFocus],
+]
+
+/** 将设计令牌写入 :root，供 CSS 与任意组件使用 */
+export function applyDesignTokensToDocument() {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement
+  for (const [key, value] of CSS_VAR_KEYS) {
+    root.style.setProperty(key, value)
+  }
+}
+
+/** Compass 页内联样式或脚本取色 */
+export function getCompassToken(name) {
+  return compassColorTokens[name]
+}
+
 // 统一的宽高比配置 - 所有组件共享（图片、倒计时等）
 export const aspectRatioConfigs = {
   // 桌面端宽高比配置
@@ -69,45 +205,13 @@ export const getAspectRatioConfig = (device = 'desktop', aspectRatio = null) => 
 export const themeConfig = {
   // 通用配置 - 所有设备共享
   common: {
-    // 颜色系统
+    // 颜色系统（与 colorTokens 同步）
     colors: {
-      // 主背景色
-      background: {
-        primary: '#312F40',      // 主背景色
-        secondary: '#201E28',    // 次要背景色（如果需要层级）
-        accent: '#3D3A4F'        // 强调背景色
-      },
-      
-      // 文本颜色
-      text: {
-        primary: '#FFFFFF',      // 主要文本色
-        secondary: '#1F2937',    // 次要文本色
-        high_light: '#92D4B8',   // 第三文本色
-        muted: '#9CA3AF'         // 静音文本色
-      },
-      
-      // 界面元素颜色
-      ui: {
-        white: '#FFFFFF',
-        border: '#D1D5DB',       // gray-300
-        focus: '#3B82F6',        // blue-500
-        shadow: 'rgba(0, 0, 0, 0.1)'
-      },
-      
-      // 半透明层
-      overlay: {
-        light: 'rgba(255, 255, 255, 0.8)',      // 亮色半透明
-        medium: 'rgba(255, 255, 255, 0.9)',     // 中等半透明
-        background: 'rgba(255, 255, 255, 0.7)'  // 背景半透明
-      },
-      
-      // 像素风对话框颜色
-      dialog: {
-        background: 'rgba(49, 47, 64, 0.95)',   // 深色背景，与主背景色接近
-        border: '#D1D5DB',                      // 亮色边框
-        shadow: 'rgba(0, 0, 0, 0.4)',          // 深色阴影
-        text: '#FFFFFF'                         // 白色文字
-      }
+      background: { ...colorTokens.background },
+      text: { ...colorTokens.text },
+      ui: { ...colorTokens.ui },
+      overlay: { ...colorTokens.overlay },
+      dialog: { ...colorTokens.dialog },
     },
     
     // 通用布局配置
@@ -128,17 +232,17 @@ export const themeConfig = {
       infoBox: 'mt-5 p-5 bg-gray-100 bg-opacity-70 rounded-lg'
     },
     
-    // 字体配置
+    // 字体配置（逻辑名与 @font-face 族名一致；界面无衬线栈见 fontTokens.uiStack / --font-ui）
     fonts: {
       primary: {
         family: 'BoutiqueBitmap9x9',
         fallback: '"Courier New", "Consolas", "Monaco", monospace',
         weights: {
           normal: 'normal',
-          bold: 'bold'
-        }
-      }
-    }
+          bold: 'bold',
+        },
+      },
+    },
   },
 
   // 设备特定配置
@@ -202,7 +306,7 @@ export const themeConfig = {
       countdown: {
         fontSize: '3vw',           // 使用视口宽度单位，响应式字体大小
         fontWeight: 'bold',        // 字体粗细
-        color: '#FFFFFF',          // 字体颜色
+        color: colorTokens.text.primary,
         textShadow: '2px 2px 4px rgba(0,0,0,0.5)', // 文字阴影
         minFontSize: '1.5rem',     // 最小字体大小
         maxFontSize: '4rem',       // 最大字体大小
@@ -315,7 +419,7 @@ export const themeConfig = {
       countdown: {
         fontSize: '6vw',           // 移动端使用更大的视口宽度单位
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: colorTokens.text.primary,
         textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
         minFontSize: '1rem',       // 移动端最小字体大小
         maxFontSize: '2.5rem',     // 移动端最大字体大小

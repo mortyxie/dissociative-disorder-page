@@ -4,7 +4,7 @@
   font-style: normal;
   font-weight: normal;
   font-display: swap; /* 优化字体加载性能 */
-  src: url('/src/assets/font/BoutiqueBitmap9x9_1.92.ttf') format('truetype');
+  src: url('../assets/font/BoutiqueBitmap9x9_1.92.ttf') format('truetype');
 }
 
 @font-face {
@@ -12,20 +12,24 @@
   font-style: normal;
   font-weight: bold;
   font-display: swap; /* 优化字体加载性能 */
-  src: url('/src/assets/font/BoutiqueBitmap9x9_Bold_1.92.ttf') format('truetype');
+  src: url('../assets/font/BoutiqueBitmap9x9_Bold_1.92.ttf') format('truetype');
 }
 
-/* 字体工具类 */
+/* 字体工具类（与 theme.js 中 fontTokens / --font-boutique 一致） */
 .font-boutique-primary {
-  font-family: "BoutiqueBitmap9x9", "Courier New", monospace;
+  font-family: var(--font-boutique, "BoutiqueBitmap9x9", "Courier New", monospace);
   font-weight: normal;
 }
 
 .font-boutique-bold {
-  font-family: "BoutiqueBitmap9x9", "Courier New", monospace;
+  font-family: var(--font-boutique, "BoutiqueBitmap9x9", "Courier New", monospace);
   font-weight: bold;
 }
 
 .font-boutique-fallback {
   font-family: "Courier New", "Consolas", "Monaco", monospace;
+}
+
+.font-ui-sans {
+  font-family: var(--font-ui, ui-sans-serif, system-ui, sans-serif);
 }

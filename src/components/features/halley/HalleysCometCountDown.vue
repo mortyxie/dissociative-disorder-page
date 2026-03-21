@@ -6,8 +6,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { createAspectRatioAwareCountdownStyle } from "/src/config/theme.js";
-import browserVersionController from "/src/script/BrowserVersionController.js";
+import { createAspectRatioAwareCountdownStyle } from "@/config/theme.js";
+import browserVersionController from "@/controllers/BrowserVersionController.js";
 
 // 获取设备类型
 const { deviceType } = browserVersionController.getReactiveData();

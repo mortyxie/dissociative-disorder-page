@@ -35,9 +35,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { getColor, getFontConfig } from "/src/config/theme.js";
-import steamIcon from "/src/assets/svg/steam_icon.svg";
-import languageController from "/src/script/LanguageController.js";
+import { getColor, getFontConfig } from "@/config/theme.js";
+import steamIcon from "@/assets/svg/steam_icon.svg";
+import languageController from "@/controllers/LanguageController.js";
 
 // Props 定义
 const props = defineProps({

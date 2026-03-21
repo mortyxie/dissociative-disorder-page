@@ -1,5 +1,5 @@
 // 此脚本控制音乐播放
-import musicUrl from '/src/assets/music/Roche_loop.mp3'
+import musicUrl from '@/assets/music/Roche_loop.mp3'
 
 // 音频实例
 let audioInstance = null;

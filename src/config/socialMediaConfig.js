@@ -1,9 +1,9 @@
-import bilibiliIcon from '/src/assets/svg/bilibili_icon.svg';
-import xiaohongshuIcon from '/src/assets/svg/xiaohongshu_icon.svg';
-import weiboIcon from '/src/assets/svg/weibo_icon.svg';
-import instagramIcon from '/src/assets/svg/instagram_icon.svg';
-import xIcon from '/src/assets/svg/x_icon.svg';
-import afdianIcon from '/src/assets/svg/afdian_icon.svg';
+import bilibiliIcon from '@/assets/svg/bilibili_icon.svg';
+import xiaohongshuIcon from '@/assets/svg/xiaohongshu_icon.svg';
+import weiboIcon from '@/assets/svg/weibo_icon.svg';
+import instagramIcon from '@/assets/svg/instagram_icon.svg';
+import xIcon from '@/assets/svg/x_icon.svg';
+import afdianIcon from '@/assets/svg/afdian_icon.svg';
 
 export const socialMediaLinks = {
   bilibili: {

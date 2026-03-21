@@ -35,8 +35,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import languageController from "/src/script/LanguageController.js";
-import { getColor, getFontConfig } from "/src/config/theme.js";
+import languageController from "@/controllers/LanguageController.js";
+import { getColor, getFontConfig } from "@/config/theme.js";
 
 // 响应式状态
 const isPanelOpen = ref(false);

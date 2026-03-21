@@ -1,8 +1,8 @@
 import { ref, computed } from "vue";
-import languageController from "/src/script/LanguageController.js";
-import browserVersionController from "/src/script/BrowserVersionController.js";
-import { parseCSV } from "/src/i18n/index.js";
-import popTextCSV from "/src/i18n/csv/ClickPopText.csv?raw";
+import languageController from "@/controllers/LanguageController.js";
+import browserVersionController from "@/controllers/BrowserVersionController.js";
+import { parseCSV } from "@/i18n/index.js";
+import popTextCSV from "@/i18n/csv/ClickPopText.csv?raw";
 
 class ClickPopTextController {
   constructor() {

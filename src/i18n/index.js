@@ -1,6 +1,6 @@
 import { createI18n } from 'vue-i18n'
-import LanguagesCSV from '/src/i18n/csv/Languages.csv?raw'
-import ClickPopTextCSV from '/src/i18n/csv/ClickPopText.csv?raw'
+import LanguagesCSV from '@/i18n/csv/Languages.csv?raw'
+import ClickPopTextCSV from '@/i18n/csv/ClickPopText.csv?raw'
 
 // 可用的 CSV 文件列表
 const CSV_FILES = {

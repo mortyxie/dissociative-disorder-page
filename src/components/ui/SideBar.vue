@@ -21,11 +21,11 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import LanguageSlidePanel from "/src/components/features/language/LanguageSlidePanel.vue";
-import HalleysCometPuzzle from "/src/components/features/halley/HalleysCometPuzzle.vue";
-import RainOfLoveFeature from "/src/components/features/rainoflove/RainOfLoveFeature.vue";
-import SteamFeature from "/src/components/features/steam/SteamFeature.vue";
-import SocialMediaFeature from "/src/components/features/socialmedia/SocialMediaFeature.vue";
+import LanguageSlidePanel from "@/components/features/language/LanguageSlidePanel.vue";
+import HalleysCometPuzzle from "@/components/features/halley/HalleysCometPuzzle.vue";
+import RainOfLoveFeature from "@/components/features/rainoflove/RainOfLoveFeature.vue";
+import SteamFeature from "@/components/features/steam/SteamFeature.vue";
+import SocialMediaFeature from "@/components/features/socialmedia/SocialMediaFeature.vue";
 
 // 语言面板开关状态
 const isLanguagePanelOpen = ref(false);

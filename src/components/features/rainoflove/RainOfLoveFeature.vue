@@ -61,9 +61,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { getColor, getFontConfig } from "/src/config/theme.js";
-import rainOfLoveIcon from "/src/assets/svg/rainoflove_icon.svg";
-import languageController from "/src/script/LanguageController.js";
+import { getColor, getFontConfig } from "@/config/theme.js";
+import rainOfLoveIcon from "@/assets/svg/rainoflove_icon.svg";
+import languageController from "@/controllers/LanguageController.js";
 
 // Props 定义
 const props = defineProps({

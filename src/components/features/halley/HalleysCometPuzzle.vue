@@ -44,14 +44,14 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted } from "vue";
-import { getColor, getFontConfig } from "/src/config/theme.js";
+import { getColor, getFontConfig } from "@/config/theme.js";
 import {
   validateAnswer,
   solveHalleysPuzzle,
   initHalleysCometPuzzle,
   getPuzzleState,
-} from "/src/script/HalleysCometPuzzle.js";
-import languageController from "/src/script/LanguageController.js";
+} from "@/controllers/HalleysCometPuzzle.js";
+import languageController from "@/controllers/LanguageController.js";
 
 // Props 定义
 const props = defineProps({

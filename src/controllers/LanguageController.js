@@ -1,5 +1,5 @@
 // 语言控制器 - 统一管理语言相关功能
-import { createI18nInstance, getTranslations } from '/src/i18n'
+import { createI18nInstance, getTranslations } from '@/i18n'
 
 class LanguageController {
   constructor() {

@@ -10,9 +10,9 @@
 
 <script setup>
 import { onMounted, onUnmounted } from "vue";
-import DesktopLayout from "/src/components/layout/DesktopLayout.vue";
-import MobileLayout from "/src/components/layout/MobileLayout.vue";
-import browserVersionController from "/src/script/BrowserVersionController.js";
+import DesktopLayout from "@/components/layout/DesktopLayout.vue";
+import MobileLayout from "@/components/layout/MobileLayout.vue";
+import browserVersionController from "@/controllers/BrowserVersionController.js";
 
 // 直接从控制器获取响应式数据
 const { isDesktop } = browserVersionController.getReactiveData();

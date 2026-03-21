@@ -71,15 +71,15 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import ClickPopText from "/src/components/ui/ClickPopText.vue";
-import HalleysCometCountDown from "/src/components/features/halley/HalleysCometCountDown.vue";
-import SideBar from "/src/components/ui/SideBar.vue";
-import browserVersionController from "/src/script/BrowserVersionController.js";
-import languageController from "/src/script/LanguageController.js";
+import ClickPopText from "@/components/ui/ClickPopText.vue";
+import HalleysCometCountDown from "@/components/features/halley/HalleysCometCountDown.vue";
+import SideBar from "@/components/ui/SideBar.vue";
+import browserVersionController from "@/controllers/BrowserVersionController.js";
+import languageController from "@/controllers/LanguageController.js";
 import {
   checkMusicPlayState,
   cleanupMusic,
-} from "/src/script/MusicController.js";
+} from "@/controllers/MusicController.js";
 import {
   getStyles,
   getColor,
@@ -87,7 +87,7 @@ import {
   getSpacing,
   getImageConfig,
   createAspectRatioAwareImageStyle,
-} from "/src/config/theme.js";
+} from "@/config/theme.js";
 
 // 直接从控制器获取响应式数据
 const { deviceType, screenWidth } = browserVersionController.getReactiveData();

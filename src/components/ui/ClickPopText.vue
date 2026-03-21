@@ -12,13 +12,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import clickPopTextController from "/src/script/ClickPopTextController.js";
+import clickPopTextController from "@/controllers/ClickPopTextController.js";
 import {
   getColor,
   getFontConfig,
   getClickPopTextConfig,
-} from "/src/config/theme.js";
-import browserVersionController from "/src/script/BrowserVersionController.js";
+} from "@/config/theme.js";
+import browserVersionController from "@/controllers/BrowserVersionController.js";
 
 // 获取响应式数据
 const { currentText } = clickPopTextController.getReactiveData();

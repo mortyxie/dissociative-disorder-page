@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./design-system.css";
 
 /* 移动端防止意外滑动，但保留下拉刷新 */
 @media (max-width: 768px) {
@@ -31,5 +32,5 @@ button[title],
 img[title],
 div[title],
 span[title] {
-  font-family: "BoutiqueBitmap9x9", "Courier New", monospace;
+  font-family: var(--font-boutique, "BoutiqueBitmap9x9", "Courier New", monospace);
 }

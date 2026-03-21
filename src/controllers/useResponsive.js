@@ -1,6 +1,6 @@
 // 响应式Hook - 处理屏幕尺寸变化和动态缩放配置
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { calculateResponsiveScale, getDynamicImageConfig, getDynamicSpacing } from '/src/config/theme.js';
+import { calculateResponsiveScale, getDynamicImageConfig, getDynamicSpacing } from '@/config/theme.js';
 
 export function useResponsive() {
   // 屏幕尺寸
