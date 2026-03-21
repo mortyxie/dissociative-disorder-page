@@ -44,6 +44,48 @@ const seedRecords = [
     summary: '凑满北斗示例',
     createdAt: '2025-03-03T16:00:00.000Z',
   },
+  {
+    id: '8',
+    title: '星簇数据 8',
+    summary: '第二簇起点',
+    createdAt: '2025-03-02T12:00:00.000Z',
+  },
+  {
+    id: '9',
+    title: '星簇 9',
+    summary: 'MST 连线示意',
+    createdAt: '2025-03-01T10:00:00.000Z',
+  },
+  {
+    id: '10',
+    title: '星簇 10',
+    summary: '同一区域聚类',
+    createdAt: '2025-02-28T18:00:00.000Z',
+  },
+  {
+    id: '11',
+    title: '星簇 11',
+    summary: '5~12 颗/簇',
+    createdAt: '2025-02-27T09:00:00.000Z',
+  },
+  {
+    id: '12',
+    title: '星簇 12',
+    summary: 'Prim 最小生成树',
+    createdAt: '2025-02-26T15:00:00.000Z',
+  },
+  {
+    id: '13',
+    title: '星簇 13',
+    summary: '旧记录先入簇',
+    createdAt: '2025-02-25T11:00:00.000Z',
+  },
+  {
+    id: '14',
+    title: '星簇 14',
+    summary: '画布可拖动',
+    createdAt: '2025-02-24T08:00:00.000Z',
+  },
 ]
 
 const records = ref(seedRecords.map((r) => ({ ...r })))
