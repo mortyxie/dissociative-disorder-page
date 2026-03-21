@@ -1,6 +1,6 @@
 <template>
   <div
-    class="compass-stars-page relative h-[calc(100vh-4.25rem)] min-h-[420px] w-full overflow-hidden"
+    class="compass-stars-page relative h-full min-h-[420px] w-full overflow-hidden"
     :style="{ backgroundColor: bgPrimary }"
   >
     <div
@@ -28,28 +28,28 @@
     >
       <div class="relative aspect-[4/3] w-full">
         <div
-          class="compass-zoom-bar pointer-events-auto absolute right-0 top-[20%] z-[25] flex h-[60%] w-[min(36vw,176px)] max-w-[min(176px,calc(100%-6px))] translate-x-0 flex-col items-end pr-1 sm:w-[min(30vw,164px)] sm:max-w-[min(164px,calc(100%-8px))]"
+          class="compass-zoom-bar pointer-events-none absolute right-0 top-[20%] z-[25] flex h-[60%] w-[min(36vw,176px)] max-w-[min(176px,calc(100%-6px))] translate-x-0 flex-col items-end pr-1 sm:w-[min(30vw,164px)] sm:max-w-[min(164px,calc(100%-8px))]"
           role="group"
           aria-label="画布缩放刻度"
-          @mousedown.stop
-          @pointerdown.stop
-          @wheel.stop.prevent="onZoomDialWheel"
         >
           <div class="compass-zoom-bar__chrome w-full shrink-0">
             <div
               class="font-boutique-primary text-right text-sm font-medium tabular-nums tracking-tight text-white/90 drop-shadow-[0_2px_12px_rgba(0,0,0,0.88)]"
             >
-              <span class="text-[1.85rem] font-semibold leading-none text-white sm:text-[2rem]">{{
-                zoomReadoutMain
-              }}</span
+              <span
+                class="text-[1.85rem] font-semibold leading-none text-white sm:text-[2rem]"
+                >{{ zoomReadoutMain }}</span
               ><span class="align-super text-[0.62em] text-white/78">×</span>
             </div>
           </div>
 
           <div
             ref="zoomBarViewportRef"
-            class="compass-zoom-bar__viewport relative mt-2 min-h-0 w-full flex-1 select-none overflow-hidden"
-            @pointerdown.prevent="onZoomDialPointerDown"
+            class="compass-zoom-bar__viewport pointer-events-auto relative mt-2 min-h-0 max-w-full flex-1 shrink-0 select-none overflow-hidden self-end"
+            :style="{ width: `${BAR_SVG_W}px` }"
+            @mousedown.stop
+            @pointerdown.stop.prevent="onZoomDialPointerDown"
+            @wheel.stop.prevent="onZoomDialWheel"
           >
             <!-- 固定水平游标（中线） -->
             <div
@@ -100,7 +100,11 @@
                     :y1="tk.y"
                     :x2="tk.x2"
                     :y2="tk.y"
-                    :stroke="tk.major ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.3)'"
+                    :stroke="
+                      tk.major
+                        ? 'rgba(255,255,255,0.94)'
+                        : 'rgba(255,255,255,0.3)'
+                    "
                     :stroke-width="tk.major ? 1.45 : 1.05"
                     stroke-linecap="round"
                   />
@@ -111,7 +115,6 @@
                     fill="rgba(255,255,255,0.84)"
                     class="compass-zoom-bar__label"
                     font-size="11"
-                    font-weight="600"
                     text-anchor="end"
                     dominant-baseline="middle"
                   >
@@ -120,11 +123,6 @@
                 </g>
               </g>
             </svg>
-            <p
-              class="pointer-events-none absolute bottom-0 right-0 text-[9px] text-white/26 drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)]"
-            >
-              上下拖 · 滚轮
-            </p>
           </div>
         </div>
 
@@ -263,7 +261,7 @@
           <p
             class="pointer-events-none absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/35"
           >
-            轻移即拖 · 短按查看 · 按住也会进入拖动 · 松手风铃 · margin / 连通
+            原来所有所得所获不如一夜的星空
           </p>
         </div>
       </div>
@@ -304,6 +302,7 @@ import {
   onMounted,
   onUnmounted,
   nextTick,
+  shallowRef,
 } from "vue";
 import { getColor } from "@/config/theme.js";
 import { useCompassRecords } from "@/composables/useCompassRecords.js";
@@ -388,8 +387,22 @@ let longPressTimer = null;
 const selected = ref(null);
 const ambientStars = ref([]);
 const hoverHubRecordId = ref(null);
+/** 正在按「从叶向根」顺序收起星线（与出现顺序镜像） */
+const edgeRetracting = ref(false);
+/** clusterId → (segmentKey → retractDelayMs) */
+const retractScheduleByCluster = shallowRef(new Map());
+/**
+ * 收起动画阶段：0=与出现结束态一致；1=无过渡切到「实线 L + 尾隙 ε」（与全显几乎一致）；
+ * 2=stroke-dasharray 由 `L ε` 过渡到 `ε L`：实线从父端画出、尾隙吃子端，是「变短」而非 offset 滑动（避免像重绘）。
+ */
+const retractAnimPhase = ref(0);
+let retractFinishTimer = null;
 
 let leaveDebounce = null;
+/** 当前悬停 hub 开始时刻（performance.now），用于「画完后再保留」 */
+let hoverHubAnchorTime = 0;
+/** 以当前 hub 为根的有向树边，最后一条边画完相对 anchor 的时长 (ms) */
+let lastHubTreeMaxDrawMs = 0;
 
 /** 拨盘与画布缩放一致；滚轮亦限制在此区间 */
 const SCALE_MIN = 0.5;
@@ -487,9 +500,7 @@ const zoomBarSvgStyle = computed(() => ({
   transform: `translateY(${zoomBarTranslateY.value}px)`,
 }));
 
-const zoomBarViewBox = computed(
-  () => `0 0 ${BAR_SVG_W} ${barSvgTotalH.value}`,
-);
+const zoomBarViewBox = computed(() => `0 0 ${BAR_SVG_W} ${barSvgTotalH.value}`);
 
 const barLabelIndexToMajor = computed(() => {
   const m = new Map();
@@ -565,8 +576,12 @@ const STAR_DRAG_SLOP_PX = 6;
 /** 短按：在 slop 内且按下时长小于此值 → 打开详情 */
 const STAR_TAP_MAX_MS = 520;
 
-/** 单条边从起点画到终点的时长；子星「被连接」时刻 = 该边开始时刻 + 此值 */
+/** 单条边从起点画到终点的时长；子星「被连接」时刻 = 该边开始时刻 + 此值；收起每条边也用此时长 */
 const EDGE_DRAW_MS = 200;
+/** 收起用 dash「尾隙」下限，避免 0 宽在部分引擎异常 */
+const EDGE_RETRACT_TAIL_GAP_MIN = 0.28;
+/** 全部星线画完后至少再保持可见多久，之后才因脱离悬停而收起 */
+const EDGE_REST_AFTER_DRAW_MS = 1000;
 
 /**
  * 自根传播：边 (p→c) 仅在 p 已连接且 p 的上一条出边画完后才开始；
@@ -586,6 +601,36 @@ function computePropagationStartMs(edges, hubIdx, nodeCount, drawMs) {
     nodeReady[cIdx] = start + drawMs;
   }
   return starts;
+}
+
+/**
+ * 与 computePropagationStartMs 对称：从叶向根收。
+ * 边 (p→c) 仅当 c 子树内所有向下的边都收完后才能开始；同一父节点下子边按「出现顺序」的逆序串行。
+ * 故与 hub 相连的边一定最后才开始消失。
+ */
+function computeRetractionStartMs(edges, hubIdx, nodeCount, drawMs) {
+  const children = Array.from({ length: nodeCount }, () => []);
+  for (const e of edges) {
+    children[e.pIdx].push(e.cIdx);
+  }
+  const retractStart = new Map();
+  const subtreeDone = Array(nodeCount).fill(0);
+
+  function dfs(v) {
+    const chs = children[v];
+    let slot = 0;
+    for (let i = chs.length - 1; i >= 0; i--) {
+      const ch = chs[i];
+      dfs(ch);
+      const start = Math.max(slot, subtreeDone[ch]);
+      retractStart.set(mstSegmentKey(v, ch), start);
+      slot = start + drawMs;
+    }
+    subtreeDone[v] = slot;
+  }
+
+  dfs(hubIdx);
+  return retractStart;
 }
 
 const pannableStyle = computed(() => ({
@@ -613,19 +658,29 @@ function setScaleTowardCenter(newS) {
   setScaleTowardPoint(newS, el.clientWidth / 2, el.clientHeight / 2);
 }
 
+function cancelEdgeRetractInFlight() {
+  if (retractFinishTimer != null) {
+    clearTimeout(retractFinishTimer);
+    retractFinishTimer = null;
+  }
+  edgeRetracting.value = false;
+  retractAnimPhase.value = 0;
+  retractScheduleByCluster.value = new Map();
+}
+
 function onStarEnter(recordId) {
   if (leaveDebounce) {
     clearTimeout(leaveDebounce);
     leaveDebounce = null;
   }
+  cancelEdgeRetractInFlight();
   hoverHubRecordId.value = recordId;
+  anchorHubHoverTiming(recordId);
 }
 
 function onStarLeave() {
-  leaveDebounce = setTimeout(() => {
-    hoverHubRecordId.value = null;
-    leaveDebounce = null;
-  }, 140);
+  if (recordDrag.active) return;
+  scheduleDeferredHubClear();
 }
 
 function clearStarLongPressTimer() {
@@ -650,7 +705,10 @@ function resetStarPointer() {
 }
 
 function releaseStarPointerCapture() {
-  if (starPointer.captureTarget != null && starPointer.capturePointerId != null) {
+  if (
+    starPointer.captureTarget != null &&
+    starPointer.capturePointerId != null
+  ) {
     try {
       starPointer.captureTarget.releasePointerCapture(
         starPointer.capturePointerId,
@@ -686,7 +744,9 @@ function onRecordStarPointerDown(record, e) {
   if (!starPositions[recordId]) return;
   clearStarLongPressTimer();
   releaseStarPointerCapture();
+  cancelEdgeRetractInFlight();
   hoverHubRecordId.value = recordId;
+  anchorHubHoverTiming(recordId);
   starPointer.pending = true;
   starPointer.recordId = recordId;
   starPointer.pendingRecord = record;
@@ -733,6 +793,7 @@ function finishStarPointerOnRelease(clientX, clientY) {
     playWindbell();
     endRecordDrag();
     resetStarPointer();
+    if (!isPointerOverAnyStarGroup(ux, uy)) scheduleDeferredHubClear();
     return;
   }
   if (starPointer.pending && starPointer.pendingRecord) {
@@ -1154,6 +1215,103 @@ function buildDirectedTreeEdges(cluster, hubIdx) {
   return edges;
 }
 
+function computeMaxTreeDrawMsForHub(hubId) {
+  if (hubId == null) return 0;
+  const graph = starFieldGraph.value;
+  for (const c of graph.clusters) {
+    const hi = c.nodes.findIndex((n) => n.record.id === hubId);
+    if (hi < 0) continue;
+    const edges = buildDirectedTreeEdges(c, hi);
+    if (!edges.length) return 0;
+    let mx = 0;
+    for (const e of edges) {
+      mx = Math.max(mx, (e.animStartMs ?? 0) + EDGE_DRAW_MS);
+    }
+    return mx;
+  }
+  return 0;
+}
+
+function anchorHubHoverTiming(recordId) {
+  hoverHubAnchorTime = performance.now();
+  lastHubTreeMaxDrawMs = computeMaxTreeDrawMsForHub(recordId);
+}
+
+function isPointerOverAnyStarGroup(clientX, clientY) {
+  if (typeof document === "undefined") return false;
+  const el = document.elementFromPoint(clientX, clientY);
+  return Boolean(el?.closest?.(".record-star-group"));
+}
+
+function scheduleDeferredHubClear() {
+  if (hoverHubRecordId.value == null) return;
+  if (leaveDebounce) {
+    clearTimeout(leaveDebounce);
+    leaveDebounce = null;
+  }
+  const elapsed = performance.now() - hoverHubAnchorTime;
+  const minBeforeClear = lastHubTreeMaxDrawMs + EDGE_REST_AFTER_DRAW_MS;
+  const waitMs = Math.max(0, minBeforeClear - elapsed);
+  leaveDebounce = setTimeout(() => {
+    leaveDebounce = null;
+    beginEdgeRetraction();
+  }, waitMs);
+}
+
+/** 与出现对称：computeRetractionStartMs；收起为子→父、dash offset 0→L（叶端先没），hub 边最后收 */
+function beginEdgeRetraction() {
+  const hubId = hoverHubRecordId.value;
+  if (hubId == null) return;
+
+  const graph = starFieldGraph.value;
+  const mapByCluster = new Map();
+  let maxEnd = 0;
+  let hasRetractEdge = false;
+
+  for (const c of graph.clusters) {
+    const hi = c.nodes.findIndex((n) => n.record.id === hubId);
+    if (hi < 0) continue;
+    const edges = buildDirectedTreeEdges(c, hi);
+    if (!edges.length) continue;
+    hasRetractEdge = true;
+    const m = computeRetractionStartMs(edges, hi, c.nodes.length, EDGE_DRAW_MS);
+    for (const d of m.values()) {
+      maxEnd = Math.max(maxEnd, d + EDGE_DRAW_MS);
+    }
+    mapByCluster.set(c.id, m);
+  }
+
+  if (!hasRetractEdge) {
+    hoverHubRecordId.value = null;
+    return;
+  }
+
+  const hubRecordIdForPulse = hoverHubRecordId.value;
+
+  retractScheduleByCluster.value = mapByCluster;
+  retractAnimPhase.value = 0;
+  edgeRetracting.value = true;
+
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      retractAnimPhase.value = 1;
+      requestAnimationFrame(() => {
+        retractAnimPhase.value = 2;
+      });
+    });
+  });
+
+  if (retractFinishTimer != null) clearTimeout(retractFinishTimer);
+  retractFinishTimer = setTimeout(() => {
+    retractFinishTimer = null;
+    hoverHubRecordId.value = null;
+    edgeRetracting.value = false;
+    retractAnimPhase.value = 0;
+    retractScheduleByCluster.value = new Map();
+    if (hubRecordIdForPulse != null) triggerStarPulse(hubRecordIdForPulse);
+  }, maxEnd + 48);
+}
+
 function mstSegmentKey(i1, i2) {
   return i1 < i2 ? `${i1},${i2}` : `${i2},${i1}`;
 }
@@ -1271,6 +1429,12 @@ const edgeHoverState = computed(() => {
   return byCluster;
 });
 
+function treeEdgePixelLen(cluster, meta) {
+  const pu = cluster.nodes[meta.pIdx];
+  const pv = cluster.nodes[meta.cIdx];
+  return Math.max(1, Math.hypot(pv.x - pu.x, pv.y - pu.y));
+}
+
 function segmentLineEndpoints(cluster, segment) {
   const metaMap = edgeHoverState.value.get(cluster.id);
   if (!metaMap) {
@@ -1281,7 +1445,8 @@ function segmentLineEndpoints(cluster, segment) {
       y2: segment.y2,
     };
   }
-  const meta = metaMap.get(mstSegmentKey(segment.i1, segment.i2));
+  const segKey = mstSegmentKey(segment.i1, segment.i2);
+  const meta = metaMap.get(segKey);
   if (!meta) {
     return {
       x1: segment.x1,
@@ -1292,6 +1457,7 @@ function segmentLineEndpoints(cluster, segment) {
   }
   const pu = cluster.nodes[meta.pIdx];
   const pv = cluster.nodes[meta.cIdx];
+  /* 出现与收起同向：父→子；收起用 dasharray 缩短实线、尾隙吃子端，不从 offset 滑整条线 */
   return { x1: pu.x, y1: pu.y, x2: pv.x, y2: pv.y };
 }
 
@@ -1301,12 +1467,50 @@ function segmentEdgeStyle(cluster, segment) {
   const metaMap = edgeHoverState.value.get(cluster.id);
   if (!metaMap) return edgeInactiveStyle(segment);
 
-  const meta = metaMap.get(mstSegmentKey(segment.i1, segment.i2));
+  const segKey = mstSegmentKey(segment.i1, segment.i2);
+  const meta = metaMap.get(segKey);
   if (!meta) return edgeInactiveStyle(segment);
 
+  if (edgeRetracting.value) {
+    const rDel = retractScheduleByCluster.value.get(cluster.id)?.get(segKey);
+    if (rDel == null) return edgeInactiveStyle(segment);
+    const L = treeEdgePixelLen(cluster, meta);
+    const tailEps = Math.max(EDGE_RETRACT_TAIL_GAP_MIN, L * 1e-4);
+    const ph = retractAnimPhase.value;
+    if (ph <= 0) {
+      return {
+        strokeDasharray: L,
+        strokeDashoffset: 0,
+        strokeLinecap: "butt",
+        opacity: 1,
+        transitionProperty: "none",
+      };
+    }
+    if (ph === 1) {
+      return {
+        strokeDasharray: `${L} ${tailEps}`,
+        strokeDashoffset: 0,
+        strokeLinecap: "butt",
+        opacity: 1,
+        transitionProperty: "none",
+      };
+    }
+    return {
+      strokeDasharray: `0.01 ${L}`,
+      strokeDashoffset: 0,
+      strokeLinecap: "butt",
+      opacity: 1,
+      transitionDelay: `${rDel}ms`,
+      transitionProperty: "stroke-dasharray",
+      transitionDuration: `${EDGE_DRAW_MS / 1000}s`,
+      transitionTimingFunction: "linear",
+    };
+  }
+
   const delayMs = meta.animStartMs ?? 0;
+  const L = treeEdgePixelLen(cluster, meta);
   return {
-    strokeDasharray: segment.len,
+    strokeDasharray: L,
     strokeDashoffset: 0,
     opacity: 1,
     transitionDelay: `${delayMs}ms`,
@@ -1322,9 +1526,9 @@ function edgeInactiveStyle(seg) {
     strokeDashoffset: seg.len,
     opacity: 0,
     transitionDelay: "0ms",
-    transitionProperty: "stroke-dashoffset, opacity",
-    transitionDuration: "0.16s, 0.16s",
-    transitionTimingFunction: "ease, ease",
+    /* 收起末态 offset=0、dash 极短；若对 offset 做过渡会从 0→L 把整条线扫出来，与 pulse 叠在一起像抽搐 */
+    transition:
+      "stroke-dasharray 0s linear, stroke-dashoffset 0s linear, opacity 0.16s ease",
   };
 }
 
@@ -1376,10 +1580,7 @@ function onWheel(e) {
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
   const factor = e.deltaY > 0 ? 0.92 : 1.08;
-  const newS = Math.min(
-    SCALE_MAX,
-    Math.max(SCALE_MIN, scale.value * factor),
-  );
+  const newS = Math.min(SCALE_MAX, Math.max(SCALE_MIN, scale.value * factor));
   setScaleTowardPoint(newS, mx, my);
 }
 
@@ -1511,6 +1712,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (leaveDebounce) clearTimeout(leaveDebounce);
+  if (retractFinishTimer != null) clearTimeout(retractFinishTimer);
   if (pulseClearTimer) clearTimeout(pulseClearTimer);
   clearStarLongPressTimer();
   window.removeEventListener("pointermove", onPanMove);
@@ -1629,6 +1831,12 @@ watch(
 }
 
 .compass-zoom-bar__label {
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(
+    --font-boutique,
+    "BoutiqueBitmap9x9",
+    "Courier New",
+    monospace
+  );
+  font-weight: 500;
 }
 </style>
