@@ -265,46 +265,9 @@
           <p
             class="pointer-events-none absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/35"
           >
-            原来所有所得所获不如一夜的星空
+            当天上星河转，我命已定盘。
           </p>
         </div>
-      </div>
-    </div>
-
-    <div
-      v-if="selected"
-      class="absolute bottom-4 left-4 right-4 z-[30] max-h-[min(52vh,420px)] overflow-y-auto rounded-md border border-white/25 bg-black/55 p-3 text-left text-sm text-white backdrop-blur-md sm:left-auto sm:right-4 sm:w-[min(22rem,90vw)]"
-      @mousedown.stop
-    >
-      <div class="flex items-start justify-between gap-2">
-        <div class="min-w-0 flex-1">
-          <p class="font-boutique-primary text-base">{{ selected.title }}</p>
-          <p class="mt-1 text-xs text-white/65">{{ selected.summary }}</p>
-          <div v-if="selected.tags?.length" class="mt-2 flex flex-wrap gap-1">
-            <span
-              v-for="tg in selected.tags"
-              :key="tg"
-              class="rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-[9px] text-white/80"
-              >{{ tg }}</span
-            >
-          </div>
-          <p class="mt-2 text-[10px] text-white/45">
-            {{ formatDate(selected.createdAt) }}
-          </p>
-          <div
-            v-if="selected.bodyMd"
-            class="compass-star-detail-md mt-3 border-t border-white/15 pt-2 text-xs leading-relaxed text-white/75"
-            v-html="renderSimpleMarkdown(selected.bodyMd)"
-          />
-        </div>
-        <button
-          type="button"
-          class="shrink-0 text-lg leading-none text-white/50 hover:text-white"
-          aria-label="关闭"
-          @click="selected = null"
-        >
-          ×
-        </button>
       </div>
     </div>
 
@@ -358,7 +321,6 @@ import {
 } from "vue";
 import { getColor } from "@/config/theme.js";
 import { useCompassRecords } from "@/composables/useCompassRecords.js";
-import { useCompassAuth } from "@/composables/useCompassAuth.js";
 import { renderSimpleMarkdown } from "@/utils/simpleMarkdown.js";
 import windbellUrl from "@/assets/music/windbell.mp3";
 import gearRotationUrl from "@/assets/music/GearRotation.mp3";
@@ -372,8 +334,6 @@ const CANVAS_H = 2200;
 const bgPrimary = getColor("background", "primary");
 const { records, sortedOldestFirst, starPositions, setStarPosition } =
   useCompassRecords();
-const { isLoggedIn } = useCompassAuth();
-
 const compassRecordEditor = inject("compassRecordEditor", null);
 const showViewfinderHands = inject("compassShowViewfinderHands", ref(true));
 
@@ -402,17 +362,6 @@ const starHoverTipStyle = computed(() => {
     top: `${t.y + pad}px`,
   };
 });
-
-watch(
-  records,
-  () => {
-    const s = selected.value;
-    if (s && !records.value.some((r) => r.id === s.id)) {
-      selected.value = null;
-    }
-  },
-  { deep: true },
-);
 
 const clipRef = ref(null);
 const pan = reactive({ x: 0, y: 0 });
@@ -483,7 +432,6 @@ const starPointer = reactive({
 
 let longPressTimer = null;
 
-const selected = ref(null);
 const ambientStars = ref([]);
 const hoverHubRecordId = ref(null);
 /** 正在按「从叶向根」顺序收起星线（与出现顺序镜像） */
@@ -938,13 +886,7 @@ function finishStarPointerOnRelease(clientX, clientY) {
     playWindbell();
     if (isShortTap) {
       const rec = starPointer.pendingRecord;
-      const isGuestStar = rec.id != null && String(rec.id).startsWith("guest-");
-      if (isLoggedIn.value && !isGuestStar) {
-        compassRecordEditor?.openEdit?.(rec.id);
-        selected.value = null;
-      } else {
-        selected.value = rec;
-      }
+      compassRecordEditor?.openPreview?.(rec.id);
       triggerStarPulse(rec.id);
     }
     resetStarPointer();
@@ -1879,13 +1821,6 @@ watch(
 );
 
 watch(
-  () => records.value.length,
-  () => {
-    selected.value = null;
-  },
-);
-
-watch(
   zoomBarViewportRef,
   (el) => {
     if (zoomBarResizeObserver) {
@@ -2074,32 +2009,4 @@ watch(
   font-weight: 500;
 }
 
-.compass-star-detail-md :deep(.compass-md-root) {
-  font-size: 0.75rem;
-  line-height: 1.55;
-}
-.compass-star-detail-md :deep(.compass-md-img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.25rem;
-  margin: 0.35rem 0;
-}
-.compass-star-detail-md :deep(.compass-md-pre) {
-  margin: 0.35rem 0;
-  padding: 0.5rem;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 0.35rem;
-  font-size: 0.65rem;
-  overflow: auto;
-}
-.compass-star-detail-md :deep(.compass-md-p) {
-  margin: 0 0 0.35rem;
-}
-.compass-star-detail-md :deep(.compass-md-h1),
-.compass-star-detail-md :deep(.compass-md-h2),
-.compass-star-detail-md :deep(.compass-md-h3) {
-  margin: 0.5rem 0 0.25rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
-}
 </style>

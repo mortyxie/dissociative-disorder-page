@@ -104,6 +104,7 @@
     <CompassRecordEditorModal
       v-model="recordEditorOpen"
       :editing-record-id="recordEditorEditingId ?? undefined"
+      :initial-view="recordEditorInitialView"
     />
   </div>
 </template>
@@ -137,25 +138,40 @@ function toggleViewfinderHands() {
 const recordEditorOpen = ref(false)
 /** 非空时为编辑已有记录；空为新建 */
 const recordEditorEditingId = ref(null)
+/** 打开已有记录时：preview=只读预览，edit=直接进入编辑（新建会设为 edit） */
+const recordEditorInitialView = ref('preview')
 
 function openNewRecordEditor() {
   recordEditorEditingId.value = null
+  recordEditorInitialView.value = 'edit'
+  recordEditorOpen.value = true
+}
+
+function openPreviewRecordEditor(id) {
+  if (id == null) return
+  recordEditorEditingId.value = id
+  recordEditorInitialView.value = 'preview'
   recordEditorOpen.value = true
 }
 
 function openEditRecordEditor(id) {
   if (id == null) return
   recordEditorEditingId.value = id
+  recordEditorInitialView.value = 'edit'
   recordEditorOpen.value = true
 }
 
 provide('compassRecordEditor', {
   openNew: openNewRecordEditor,
+  openPreview: openPreviewRecordEditor,
   openEdit: openEditRecordEditor,
 })
 
 watch(recordEditorOpen, (open) => {
-  if (!open) recordEditorEditingId.value = null
+  if (!open) {
+    recordEditorEditingId.value = null
+    recordEditorInitialView.value = 'preview'
+  }
 })
 
 const route = useRoute()

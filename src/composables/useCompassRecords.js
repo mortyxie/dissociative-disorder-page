@@ -5,6 +5,13 @@ import { excerptFromMarkdown } from '@/utils/simpleMarkdown.js'
 const BUNDLE_KEY_PREFIX = 'compass_user_bundle_v1:'
 const DRAFT_KEY_PREFIX = 'compass_record_editor_draft_v1:'
 
+/** 标题最多字数（Unicode 码位） */
+export const COMPASS_RECORD_TITLE_MAX = 30
+
+export function clampRecordTitle(str) {
+  return Array.from(String(str || '')).slice(0, COMPASS_RECORD_TITLE_MAX).join('')
+}
+
 /** 未登录：仅展示这 5 条占位，不写本地、不累计演示添加 */
 const GUEST_RECORDS = [
   {
@@ -83,7 +90,18 @@ function clearReactiveObject(obj) {
 }
 
 function cloneRecords(list) {
-  return list.map((r) => ({ ...r }))
+  return list.map((r) => {
+    const pinned = Boolean(r.pinned)
+    return {
+      ...r,
+      pinned,
+      pinnedAt: pinned
+        ? typeof r.pinnedAt === 'string'
+          ? r.pinnedAt
+          : r.createdAt
+        : null,
+    }
+  })
 }
 
 function normalizeTagList(arr) {
@@ -245,7 +263,7 @@ export function useCompassRecords() {
     if (activeUsernameNorm == null) return null
     const body = String(bodyMd || '')
     const bodyTrim = body.trim()
-    const t = String(title || '').trim()
+    const t = clampRecordTitle(String(title || '').trim())
     const finalTitle = t || '无标题'
     if (!bodyTrim && !t) return null
 
@@ -275,6 +293,8 @@ export function useCompassRecords() {
       tags: normalizeTagList(tags),
       createdAt: now,
       clusterId,
+      pinned: false,
+      pinnedAt: null,
     }
     records.value.push(rec)
     return rec.id
@@ -290,7 +310,7 @@ export function useCompassRecords() {
     if (idx < 0) return false
     const body = String(bodyMd || '')
     const bodyTrim = body.trim()
-    const t = String(title || '').trim()
+    const t = clampRecordTitle(String(title || '').trim())
     if (!bodyTrim && !t) return false
     const finalTitle = t || '无标题'
     const summary =
@@ -302,6 +322,22 @@ export function useCompassRecords() {
       summary,
       bodyMd: body,
       tags: normalizeTagList(tags),
+    }
+    schedulePersist()
+    return true
+  }
+
+  /** 置顶 / 取消置顶（登录用户） */
+  function toggleRecordPin(id) {
+    if (activeUsernameNorm == null || id == null) return false
+    const idx = records.value.findIndex((r) => r.id === id)
+    if (idx < 0) return false
+    const r = records.value[idx]
+    const nextPinned = !r.pinned
+    records.value[idx] = {
+      ...r,
+      pinned: nextPinned,
+      pinnedAt: nextPinned ? new Date().toISOString() : null,
     }
     schedulePersist()
     return true
@@ -351,6 +387,7 @@ export function useCompassRecords() {
     addDemoRecord,
     commitNewRecordFromEditor,
     updateRecordFromEditor,
+    toggleRecordPin,
     deleteRecordById,
     addUserTag,
     userTags,

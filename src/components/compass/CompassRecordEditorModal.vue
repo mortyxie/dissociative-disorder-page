@@ -10,7 +10,7 @@
       <div
         class="absolute inset-0 bg-black/50 backdrop-blur-md"
         aria-hidden="true"
-        @click="onBackdrop"
+        @click="onBackdropClick"
       />
       <div
         class="compass-editor-panel relative flex max-h-[min(92dvh,880px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-white/18 shadow-2xl"
@@ -28,7 +28,23 @@
           </h2>
           <div class="flex shrink-0 items-center gap-1">
             <button
-              v-if="editingRecordId"
+              v-if="canEditExisting && uiMode === 'edit'"
+              type="button"
+              class="rounded-md border border-white/22 bg-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-white/85 transition hover:bg-white/14 sm:text-xs"
+              @click="switchToPreview"
+            >
+              预览
+            </button>
+            <button
+              v-if="canEditExisting && uiMode === 'preview'"
+              type="button"
+              class="rounded-md border border-[rgba(146,212,184,0.45)] bg-[rgba(146,212,184,0.14)] px-2.5 py-1 text-[11px] font-medium text-[#c8f0df] transition hover:bg-[rgba(146,212,184,0.22)] sm:text-xs"
+              @click="switchToEdit"
+            >
+              编辑
+            </button>
+            <button
+              v-if="canEditExisting && editingRecordId"
               type="button"
               class="rounded-md border border-red-400/35 bg-red-500/15 px-2.5 py-1 text-[11px] font-medium text-red-200/95 transition hover:bg-red-500/25 sm:text-xs"
               @click="confirmDeleteEditingRecord"
@@ -39,7 +55,7 @@
               type="button"
               class="rounded-md px-2 py-1 text-lg leading-none text-white/45 transition hover:bg-white/10 hover:text-white/85"
               aria-label="关闭"
-              @click="closeAndCommit"
+              @click="onHeaderClose"
             >
               ×
             </button>
@@ -49,13 +65,58 @@
         <div
           class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-3 sm:px-5 sm:py-4"
         >
+          <!-- 已有记录：只读预览 -->
+          <div
+            v-if="editingRecordId && uiMode === 'preview'"
+            class="space-y-4"
+          >
+            <div>
+              <p class="text-[11px] text-white/50 sm:text-xs">标题</p>
+              <p
+                class="font-boutique-primary mt-1 text-base font-medium text-white/95 sm:text-lg"
+              >
+                {{ displayTitle }}
+              </p>
+            </div>
+            <p
+              v-if="previewCreatedAt"
+              class="text-[11px] text-white/45 sm:text-xs"
+            >
+              {{ formatRecordDate(previewCreatedAt) }}
+            </p>
+            <div v-if="selectedTags.length">
+              <p class="text-[11px] text-white/50 sm:text-xs">标签</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <span
+                  v-for="t in selectedTags"
+                  :key="'pv-' + t"
+                  class="rounded-full border border-white/20 bg-white/8 px-2.5 py-0.5 text-[10px] text-white/80 sm:text-[11px]"
+                  >{{ t }}</span
+                >
+              </div>
+            </div>
+            <div>
+              <p class="text-[11px] text-white/50 sm:text-xs">正文</p>
+              <div
+                class="compass-md-preview compass-record-readonly-md mt-2 min-h-[min(42vh,320px)] overflow-auto rounded-lg border border-white/12 bg-[#1e1c28] p-4 sm:min-h-[min(48vh,400px)]"
+                v-html="readonlyPreviewHtml"
+              />
+            </div>
+          </div>
+
+          <template v-else>
           <label class="block text-[11px] text-white/50 sm:text-xs">
-            标题
+            <span class="flex items-baseline justify-between gap-2">
+              <span>标题</span>
+              <span class="font-mono text-[10px] text-white/35 tabular-nums sm:text-[11px]">
+                {{ titleCharCount }}/{{ COMPASS_RECORD_TITLE_MAX }}
+              </span>
+            </span>
             <input
               v-model.trim="editorTitle"
               type="text"
               class="mt-1 w-full rounded-lg border border-white/15 bg-[#252336] px-3 py-2 text-sm text-white/92 outline-none placeholder:text-white/30 focus:border-[rgba(146,212,184,0.45)] focus:ring-2 focus:ring-[rgba(146,212,184,0.25)]"
-              placeholder="留空则保存为「无标题」（不再用正文首行代替）"
+              placeholder="最多 30 字；留空则保存为「无标题」"
             />
           </label>
 
@@ -166,9 +227,23 @@
             placeholder="Markdown 源码。粘贴截图会插入为 ![](data:...) 语法。"
             @paste="onPasteSource"
           />
+          </template>
         </div>
 
         <footer
+          v-if="editingRecordId && uiMode === 'preview'"
+          class="flex shrink-0 items-center justify-end gap-2 border-t border-white/10 bg-[#1a1824]/90 px-4 py-3 sm:px-5"
+        >
+          <button
+            type="button"
+            class="rounded-lg border border-white/20 bg-white/[0.08] px-4 py-2 text-xs font-medium text-white/88 hover:bg-white/14"
+            @click="closeWithoutSave"
+          >
+            关闭
+          </button>
+        </footer>
+        <footer
+          v-else
           class="flex shrink-0 items-center justify-between gap-2 border-t border-white/10 bg-[#1a1824]/90 px-4 py-3 sm:px-5"
         >
           <p class="text-[10px] text-white/38 sm:text-[11px]">
@@ -196,12 +271,22 @@ import {
   applyLiveBlockTransforms,
   handleRichEditorEnter,
 } from '@/utils/richEditorLiveMd.js'
-import { useCompassRecords } from '@/composables/useCompassRecords.js'
+import {
+  useCompassRecords,
+  clampRecordTitle,
+  COMPASS_RECORD_TITLE_MAX,
+} from '@/composables/useCompassRecords.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   /** 非空时编辑该 id 的已有记录 */
   editingRecordId: { type: String, default: undefined },
+  /** 打开已有记录时的初始界面：preview=只读预览，edit=直接编辑（未传时默认预览） */
+  initialView: {
+    type: String,
+    default: 'preview',
+    validator: (v) => v === 'preview' || v === 'edit',
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -222,11 +307,38 @@ const {
   saveEditorDraft,
   loadEditorDraft,
   clearEditorDraft,
+  canPersistRecords,
 } = useCompassRecords()
 
-const modalTitle = computed(() =>
-  props.editingRecordId ? '编辑知识星' : '新建知识星',
-)
+/** @type {import('vue').Ref<'preview'|'edit'>} */
+const uiMode = ref('edit')
+const previewCreatedAt = ref('')
+
+const canEditExisting = computed(() => {
+  const id = props.editingRecordId
+  if (!id) return false
+  if (!canPersistRecords.value) return false
+  if (String(id).startsWith('guest-')) return false
+  return true
+})
+
+const modalTitle = computed(() => {
+  if (!props.editingRecordId) return '新建知识星'
+  if (uiMode.value === 'preview') return '预览知识星'
+  return '编辑知识星'
+})
+
+const displayTitle = computed(() => {
+  const t = (editorTitle.value || '').trim()
+  return t || '无标题'
+})
+
+const readonlyPreviewHtml = computed(() => {
+  const md = (editorBody.value || '').trim()
+  return md
+    ? renderSimpleMarkdown(md)
+    : '<div class="compass-md-root"><p class="compass-md-p text-white/42">暂无正文</p></div>'
+})
 
 const editorTitle = ref('')
 const editorBody = ref('')
@@ -237,6 +349,10 @@ const tagHint = ref('')
 const panelTab = ref('preview')
 const bodyRef = ref(null)
 const richRef = ref(null)
+
+const titleCharCount = computed(
+  () => Array.from(editorTitle.value || '').length,
+)
 
 let draftSaveTimer = null
 let richToMdTimer = null
@@ -304,12 +420,56 @@ function resetForm() {
   newTagName.value = ''
   tagHint.value = ''
   panelTab.value = 'preview'
+  uiMode.value = 'edit'
+  previewCreatedAt.value = ''
+}
+
+function formatRecordDate(iso) {
+  try {
+    return new Date(iso).toLocaleString('zh-CN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
+  } catch {
+    return iso
+  }
+}
+
+function switchToPreview() {
+  if (panelTab.value === 'preview') flushRichToMd()
+  uiMode.value = 'preview'
+}
+
+function switchToEdit() {
+  uiMode.value = 'edit'
+  nextTick(() => {
+    if (panelTab.value === 'preview') setRichFromMd()
+  })
+}
+
+function closeWithoutSave() {
+  resetForm()
+  emit('update:modelValue', false)
+}
+
+function onHeaderClose() {
+  if (props.editingRecordId && uiMode.value === 'preview') {
+    closeWithoutSave()
+  } else {
+    closeAndCommit()
+  }
+}
+
+function onBackdropClick() {
+  onHeaderClose()
 }
 
 function hydrateFromDraft() {
   const d = loadEditorDraft()
   if (d && typeof d === 'object') {
-    editorTitle.value = typeof d.title === 'string' ? d.title : ''
+    editorTitle.value = clampRecordTitle(
+      typeof d.title === 'string' ? d.title : '',
+    )
     editorBody.value = typeof d.bodyMd === 'string' ? d.bodyMd : ''
     selectedTags.value = Array.isArray(d.selectedTagNames)
       ? d.selectedTagNames.filter(Boolean)
@@ -325,12 +485,17 @@ function hydrateFromRecordId(recordId) {
     resetForm()
     return
   }
-  editorTitle.value = typeof r.title === 'string' ? r.title : ''
+  editorTitle.value = clampRecordTitle(
+    typeof r.title === 'string' ? r.title : '',
+  )
   editorBody.value = typeof r.bodyMd === 'string' ? r.bodyMd : ''
   selectedTags.value = Array.isArray(r.tags) ? [...r.tags] : []
   newTagName.value = ''
   tagHint.value = ''
   panelTab.value = 'preview'
+  previewCreatedAt.value =
+    typeof r.createdAt === 'string' ? r.createdAt : ''
+  uiMode.value = props.initialView === 'edit' ? 'edit' : 'preview'
 }
 
 watch(
@@ -341,9 +506,13 @@ watch(
         hydrateFromRecordId(props.editingRecordId)
       } else {
         hydrateFromDraft()
+        uiMode.value = 'edit'
+        previewCreatedAt.value = ''
       }
       nextTick(() => {
-        if (panelTab.value === 'preview') setRichFromMd()
+        if (uiMode.value === 'edit' && panelTab.value === 'preview') {
+          setRichFromMd()
+        }
         scheduleDraftSave()
       })
     } else {
@@ -362,6 +531,11 @@ watch(
   },
   { deep: true },
 )
+
+watch(editorTitle, (v) => {
+  const c = clampRecordTitle(v)
+  if (c !== v) editorTitle.value = c
+})
 
 function createTag() {
   tagHint.value = ''
@@ -560,9 +734,6 @@ function confirmDeleteEditingRecord() {
   emit('update:modelValue', false)
 }
 
-function onBackdrop() {
-  closeAndCommit()
-}
 </script>
 
 <style scoped>
