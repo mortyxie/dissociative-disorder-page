@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative font-boutique-primary">
     <div
       class="absolute left-0 top-1.5 z-[1] h-3 w-3 rounded-full border-2 border-white sm:top-2 sm:h-3.5 sm:w-3.5"
       :style="{ backgroundColor: bgPrimary }"

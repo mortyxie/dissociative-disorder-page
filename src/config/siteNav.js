@@ -12,7 +12,7 @@ export const siteNavItems = [
   },
   {
     id: 'compass',
-    to: '/compass',
+    to: '/compass/stars',
     label: '个人知识库',
     isActive: (path) => path.startsWith('/compass'),
   },

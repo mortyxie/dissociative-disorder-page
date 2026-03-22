@@ -27,7 +27,7 @@
     <Teleport to="body">
       <div
         v-if="modalOpen"
-        class="fixed inset-0 z-[12000] flex items-end justify-center p-3 sm:items-center sm:p-6"
+        class="font-boutique-primary fixed inset-0 z-[12000] flex items-end justify-center p-3 sm:items-center sm:p-6"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"

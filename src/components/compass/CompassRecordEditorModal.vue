@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="compass-record-editor-overlay fixed inset-0 z-[12500] flex items-center justify-center p-2 sm:p-5"
+      class="compass-record-editor-overlay font-boutique-primary fixed inset-0 z-[12500] flex items-center justify-center p-2 sm:p-5"
       role="dialog"
       aria-modal="true"
       aria-labelledby="compass-editor-title"
@@ -108,7 +108,7 @@
           <label class="block text-[11px] text-white/50 sm:text-xs">
             <span class="flex items-baseline justify-between gap-2">
               <span>标题</span>
-              <span class="font-mono text-[10px] text-white/35 tabular-nums sm:text-[11px]">
+              <span class="text-[10px] text-white/35 tabular-nums sm:text-[11px]">
                 {{ titleCharCount }}/{{ COMPASS_RECORD_TITLE_MAX }}
               </span>
             </span>
@@ -739,33 +739,43 @@ function confirmDeleteEditingRecord() {
 <style scoped>
 .compass-editor-textarea {
   font-family: var(
-    --font-ui,
-    ui-sans-serif,
-    system-ui,
-    'Segoe UI',
-    'PingFang SC',
-    'Microsoft YaHei',
-    sans-serif
+    --font-boutique,
+    'BoutiqueBitmap9x9',
+    'Courier New',
+    monospace
   );
 }
 
 .compass-rich-editable {
   font-family: var(
-    --font-ui,
-    ui-sans-serif,
-    system-ui,
-    'Segoe UI',
-    'PingFang SC',
-    'Microsoft YaHei',
-    sans-serif
+    --font-boutique,
+    'BoutiqueBitmap9x9',
+    'Courier New',
+    monospace
   );
 }
 
 .compass-md-preview :deep(.compass-md-root) {
+  font-family: var(
+    --font-boutique,
+    'BoutiqueBitmap9x9',
+    'Courier New',
+    monospace
+  );
   font-size: 0.875rem;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.88);
   min-height: 4rem;
+}
+
+.compass-md-preview :deep(.compass-md-code),
+.compass-md-preview :deep(.compass-md-pre) {
+  font-family: var(
+    --font-boutique,
+    'BoutiqueBitmap9x9',
+    'Courier New',
+    monospace
+  );
 }
 
 .compass-md-preview :deep(.compass-md-h1) {

@@ -1,5 +1,5 @@
 <template>
-  <div class="compass-timeline px-4 pb-20 sm:px-6">
+  <div class="compass-timeline font-boutique-primary px-4 pb-20 sm:px-6">
     <header class="mb-5 max-w-2xl">
       <h2 class="font-boutique-primary text-xl text-white">知识时间线</h2>
       <p class="mt-2 text-sm text-white/65">

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="compass-stars-page relative h-full min-h-[420px] w-full min-w-0 overflow-visible"
+    class="compass-stars-page font-boutique-primary relative h-full min-h-[420px] w-full min-w-0 overflow-visible"
     :style="{ backgroundColor: bgPrimary }"
   >
     <div

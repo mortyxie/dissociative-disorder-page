@@ -1,6 +1,6 @@
 <template>
   <div
-    class="compass-app relative flex min-h-0 flex-col overflow-hidden [height:100dvh] [min-height:100dvh]"
+    class="compass-app font-boutique-primary relative flex min-h-0 flex-col overflow-hidden [height:100dvh] [min-height:100dvh]"
     :style="{ backgroundColor: bgPrimary, color: textPrimary }"
   >
     <!--
@@ -32,9 +32,7 @@
           >
         </template>
       </nav>
-      <div
-        class="pointer-events-auto flex min-w-0 justify-end pr-4 sm:pr-6"
-      >
+      <div class="pointer-events-auto flex min-w-0 justify-end pr-4 sm:pr-6">
         <CompassAuthPanel />
       </div>
     </header>
@@ -96,7 +94,21 @@
           "
           @click="toggleViewfinderHands"
         >
-          <span>{{ showViewfinderHands ? '隐藏手势' : '显示手势' }}</span>
+          <span>{{ showViewfinderHands ? "隐藏手势" : "显示手势" }}</span>
+        </button>
+        <button
+          type="button"
+          class="pointer-events-auto box-border inline-flex h-7 w-max shrink-0 items-center justify-center gap-0.5 text-nowrap rounded-md border px-2.5 text-[10px] leading-none shadow backdrop-blur-sm sm:h-8 sm:px-3 sm:text-[11px]"
+          :class="
+            bgmMuted
+              ? 'border-white/18 bg-black/25 text-white/55 hover:bg-white/10 hover:text-white/80'
+              : 'border-white/28 bg-black/35 text-white/88 hover:bg-white/10'
+          "
+          :aria-pressed="bgmMuted"
+          :title="bgmMuted ? '取消静音，继续播放背景音乐' : '静音背景音乐'"
+          @click="toggleBgmMute"
+        >
+          <span>{{ bgmMuted ? "播放音乐" : "静音音乐" }}</span>
         </button>
       </div>
     </Teleport>
@@ -106,88 +118,252 @@
       :editing-record-id="recordEditorEditingId ?? undefined"
       :initial-view="recordEditorInitialView"
     />
+
+    <audio
+      ref="bgmRef"
+      class="sr-only"
+      :src="compassBgmSrc"
+      loop
+      preload="auto"
+      playsinline
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, provide, computed } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { getColor } from '@/config/theme.js'
-import { useCompassAuth } from '@/composables/useCompassAuth.js'
-import CompassAuthPanel from '@/components/compass/CompassAuthPanel.vue'
-import CompassRecordEditorModal from '@/components/compass/CompassRecordEditorModal.vue'
+import {
+  ref,
+  watch,
+  provide,
+  computed,
+  onMounted,
+  onUnmounted,
+  nextTick,
+} from "vue";
+import { RouterLink, RouterView, useRoute } from "vue-router";
+import { getColor } from "@/config/theme.js";
+import { useCompassAuth } from "@/composables/useCompassAuth.js";
+import CompassAuthPanel from "@/components/compass/CompassAuthPanel.vue";
+import CompassRecordEditorModal from "@/components/compass/CompassRecordEditorModal.vue";
+import compassBgmSrc from "@/assets/music/BGM_Enemy.mp3";
 
-const bgPrimary = getColor('background', 'primary')
-const textPrimary = getColor('text', 'primary')
+const COMPASS_BGM_MUTED_KEY = "compass_bgm_muted_v1";
 
-const navItems = [
-  { to: '/compass/stars', label: '星盘' },
-  { to: '/compass/timeline', label: '时间线' },
-]
-
-const { isLoggedIn } = useCompassAuth()
-
-/** 星盘取景器双手装饰（不含 ViewFinder 线稿） */
-const showViewfinderHands = ref(true)
-provide('compassShowViewfinderHands', showViewfinderHands)
-
-function toggleViewfinderHands() {
-  showViewfinderHands.value = !showViewfinderHands.value
+function readStoredBgmMuted() {
+  if (typeof localStorage === "undefined") return false;
+  return localStorage.getItem(COMPASS_BGM_MUTED_KEY) === "1";
 }
 
-const recordEditorOpen = ref(false)
+const bgPrimary = getColor("background", "primary");
+const textPrimary = getColor("text", "primary");
+
+const navItems = [
+  { to: "/compass/stars", label: "星盘" },
+  { to: "/compass/timeline", label: "时间线" },
+];
+
+const { isLoggedIn } = useCompassAuth();
+
+/** 星盘取景器双手装饰（不含 ViewFinder 线稿） */
+const showViewfinderHands = ref(true);
+provide("compassShowViewfinderHands", showViewfinderHands);
+
+function toggleViewfinderHands() {
+  showViewfinderHands.value = !showViewfinderHands.value;
+}
+
+const recordEditorOpen = ref(false);
 /** 非空时为编辑已有记录；空为新建 */
-const recordEditorEditingId = ref(null)
+const recordEditorEditingId = ref(null);
 /** 打开已有记录时：preview=只读预览，edit=直接进入编辑（新建会设为 edit） */
-const recordEditorInitialView = ref('preview')
+const recordEditorInitialView = ref("preview");
 
 function openNewRecordEditor() {
-  recordEditorEditingId.value = null
-  recordEditorInitialView.value = 'edit'
-  recordEditorOpen.value = true
+  recordEditorEditingId.value = null;
+  recordEditorInitialView.value = "edit";
+  recordEditorOpen.value = true;
 }
 
 function openPreviewRecordEditor(id) {
-  if (id == null) return
-  recordEditorEditingId.value = id
-  recordEditorInitialView.value = 'preview'
-  recordEditorOpen.value = true
+  if (id == null) return;
+  recordEditorEditingId.value = id;
+  recordEditorInitialView.value = "preview";
+  recordEditorOpen.value = true;
 }
 
 function openEditRecordEditor(id) {
-  if (id == null) return
-  recordEditorEditingId.value = id
-  recordEditorInitialView.value = 'edit'
-  recordEditorOpen.value = true
+  if (id == null) return;
+  recordEditorEditingId.value = id;
+  recordEditorInitialView.value = "edit";
+  recordEditorOpen.value = true;
 }
 
-provide('compassRecordEditor', {
+provide("compassRecordEditor", {
   openNew: openNewRecordEditor,
   openPreview: openPreviewRecordEditor,
   openEdit: openEditRecordEditor,
-})
+});
 
 watch(recordEditorOpen, (open) => {
   if (!open) {
-    recordEditorEditingId.value = null
-    recordEditorInitialView.value = 'preview'
+    recordEditorEditingId.value = null;
+    recordEditorInitialView.value = "preview";
   }
-})
+});
 
-const route = useRoute()
-const compassMainEl = ref(null)
+const route = useRoute();
+const compassMainEl = ref(null);
 
-/** 星盘页大手势会伸出舞台，需允许横向溢出以免被裁切 */
 const isCompassStarsView = computed(
-  () => route.path === '/compass/stars' || route.name === 'compass-stars',
-)
+  () => route.path === "/compass/stars" || route.name === "compass-stars",
+);
+
+const BGM_VOLUME = 0.38;
+
+const bgmRef = ref(null);
+const bgmMuted = ref(readStoredBgmMuted());
+/** 浏览器已允许播放轨道，但当前为静音，等待首次用户手势后再出声（自动播放策略） */
+const bgmAwaitingUserGesture = ref(false);
+
+let bgmGestureUnlockCleanup = null;
+
+function teardownBgmGestureUnlock() {
+  if (bgmGestureUnlockCleanup) {
+    bgmGestureUnlockCleanup();
+    bgmGestureUnlockCleanup = null;
+  }
+}
+
+/**
+ * 在用户已交互的上下文中尝试有声播放（例如点击「取消静音」）。
+ */
+function tryPlayBgmWithSound() {
+  const el = bgmRef.value;
+  if (!el || bgmMuted.value) return;
+  el.muted = false;
+  el.volume = BGM_VOLUME;
+  void el.play().catch(() => {});
+}
+
+function applyBgmMuteState() {
+  const el = bgmRef.value;
+  if (el) el.muted = bgmMuted.value;
+}
+
+/**
+ * 启动 BGM：未静音时先尝试有声自动播放；被策略拦截则先静音 play，再监听首次交互后恢复音量。
+ */
+async function startBgmPlayback() {
+  const el = bgmRef.value;
+  if (!el) return;
+
+  el.loop = true;
+  teardownBgmGestureUnlock();
+  bgmAwaitingUserGesture.value = false;
+
+  if (bgmMuted.value) {
+    el.muted = true;
+    el.volume = BGM_VOLUME;
+    try {
+      await el.play();
+    } catch {
+      /* 忽略 */
+    }
+    return;
+  }
+
+  el.volume = BGM_VOLUME;
+  el.muted = false;
+  try {
+    await el.play();
+    return;
+  } catch {
+    /* 常见：无用户手势时禁止带声自动播放 */
+  }
+
+  el.muted = true;
+  try {
+    await el.play();
+    bgmAwaitingUserGesture.value = true;
+    setupBgmGestureUnlockAfterPolicyBlock();
+  } catch {
+    /* 仍失败则放弃 */
+  }
+}
+
+/**
+ * 在 pointerdown 上排队 microtask，以便同一指针下的「静音」等按钮先完成 click 再判断是否出声。
+ */
+function setupBgmGestureUnlockAfterPolicyBlock() {
+  teardownBgmGestureUnlock();
+  const tryUnlockAfterInput = () => {
+    queueMicrotask(() => {
+      if (!bgmAwaitingUserGesture.value) {
+        teardownBgmGestureUnlock();
+        return;
+      }
+      if (bgmMuted.value) {
+        bgmAwaitingUserGesture.value = false;
+        teardownBgmGestureUnlock();
+        return;
+      }
+      tryPlayBgmWithSound();
+      bgmAwaitingUserGesture.value = false;
+      teardownBgmGestureUnlock();
+    });
+  };
+  const onPointerDown = () => tryUnlockAfterInput();
+  const onKeyDown = (e) => {
+    if (e.repeat) return;
+    tryUnlockAfterInput();
+  };
+  document.addEventListener("pointerdown", onPointerDown, true);
+  document.addEventListener("keydown", onKeyDown, true);
+  bgmGestureUnlockCleanup = () => {
+    document.removeEventListener("pointerdown", onPointerDown, true);
+    document.removeEventListener("keydown", onKeyDown, true);
+  };
+}
+
+function toggleBgmMute() {
+  bgmMuted.value = !bgmMuted.value;
+  if (typeof localStorage !== "undefined") {
+    localStorage.setItem(COMPASS_BGM_MUTED_KEY, bgmMuted.value ? "1" : "0");
+  }
+  applyBgmMuteState();
+  if (!bgmMuted.value) {
+    bgmAwaitingUserGesture.value = false;
+    teardownBgmGestureUnlock();
+    tryPlayBgmWithSound();
+  }
+}
+
+watch(bgmMuted, () => {
+  applyBgmMuteState();
+});
 
 watch(
   () => route.fullPath,
   () => {
-    compassMainEl.value?.scrollTo?.(0, 0)
+    compassMainEl.value?.scrollTo?.(0, 0);
   },
-)
+);
+
+onMounted(() => {
+  void nextTick(() => {
+    void startBgmPlayback();
+  });
+});
+
+onUnmounted(() => {
+  teardownBgmGestureUnlock();
+  bgmAwaitingUserGesture.value = false;
+  const el = bgmRef.value;
+  if (el) {
+    el.pause();
+    el.currentTime = 0;
+  }
+});
 </script>
 
 <style scoped>

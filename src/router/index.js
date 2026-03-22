@@ -12,6 +12,7 @@ const routes = [
     path: '/compass',
     component: () => import('@/views/compass/CompassLayout.vue'),
     meta: { title: '个人知识库' },
+    /** 直接访问 /compass 或子路径为空时进入星盘 */
     redirect: '/compass/stars',
     children: [
       {
