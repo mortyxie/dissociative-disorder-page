@@ -22,8 +22,11 @@
   }
 }
 
-/* 确保浏览器原生 tooltip 使用项目字体 */
-[title] {
+/*
+ * 勿对全部 [title] 设 position:relative：会覆盖 Tailwind 的 .fixed（同特异性时本文件在后），
+ * 导致带 title 的 fixed 按钮（如 Compass「添加记录」Teleport 到 body）退化成相对定位并挤出视口。
+ */
+[title]:not(button) {
   position: relative;
 }
 

@@ -43,13 +43,32 @@
                 {{ formatDate(item.createdAt) }}
               </time>
             </div>
+            <div
+              v-if="item.tags?.length"
+              class="mt-2 flex flex-wrap gap-1"
+            >
+              <span
+                v-for="tg in item.tags"
+                :key="tg"
+                class="rounded-full border border-white/20 bg-white/8 px-2 py-0.5 text-[9px] text-white/75"
+                >{{ tg }}</span
+              >
+            </div>
             <p
-              v-if="openId === item.id"
+              v-if="openId === item.id && !item.bodyMd"
               class="mt-2 border-t border-white/15 pt-2 text-sm leading-relaxed text-white/70"
             >
               {{ item.summary }}
             </p>
-            <p v-else class="mt-1 line-clamp-1 text-xs text-white/45">
+            <div
+              v-if="openId === item.id && item.bodyMd"
+              class="compass-timeline-md mt-2 border-t border-white/15 pt-2 text-sm leading-relaxed text-white/75"
+              v-html="renderSimpleMarkdown(item.bodyMd)"
+            />
+            <p
+              v-if="openId !== item.id"
+              class="mt-1 line-clamp-1 text-xs text-white/45"
+            >
               {{ item.summary }}
             </p>
           </button>
@@ -70,6 +89,7 @@
 import { ref } from 'vue'
 import { getColor } from '@/config/theme.js'
 import { useCompassRecords } from '@/composables/useCompassRecords.js'
+import { renderSimpleMarkdown } from '@/utils/simpleMarkdown.js'
 
 const bgPrimary = getColor('background', 'primary')
 
@@ -91,3 +111,20 @@ function formatDate(iso) {
   }
 }
 </script>
+
+<style scoped>
+.compass-timeline-md :deep(.compass-md-img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  margin: 0.35rem 0;
+}
+.compass-timeline-md :deep(.compass-md-pre) {
+  margin: 0.35rem 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 0.35rem;
+  font-size: 0.7rem;
+  overflow: auto;
+}
+</style>

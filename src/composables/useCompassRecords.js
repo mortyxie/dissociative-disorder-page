@@ -1,148 +1,175 @@
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
+import { currentUser, normalizeUsername } from '@/composables/useCompassAuth.js'
+import { excerptFromMarkdown } from '@/utils/simpleMarkdown.js'
 
-/** 星盘画布绝对坐标（与 CompassStarsView 中 CANVAS 一致） */
-const STAR_POS_LS_KEY = 'compass-star-positions-v1'
+const BUNDLE_KEY_PREFIX = 'compass_user_bundle_v1:'
+const DRAFT_KEY_PREFIX = 'compass_record_editor_draft_v1:'
 
-function loadStarPositionsRaw() {
-  try {
-    const raw = localStorage.getItem(STAR_POS_LS_KEY)
-    if (!raw) return {}
-    const o = JSON.parse(raw)
-    if (o && typeof o === 'object' && !Array.isArray(o)) return o
-  } catch (_) {}
-  return {}
-}
-
-const starPositions = reactive(loadStarPositionsRaw())
-
-let starPosPersistTimer = null
-function schedulePersistStarPositions() {
-  clearTimeout(starPosPersistTimer)
-  starPosPersistTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(STAR_POS_LS_KEY, JSON.stringify({ ...starPositions }))
-    } catch (_) {}
-  }, 60)
-}
-
-/** 写入某条 record 在星盘 SVG 中的绝对坐标并持久化 */
-export function setStarPosition(recordId, x, y) {
-  if (recordId == null) return
-  const nx = Number(x)
-  const ny = Number(y)
-  if (!Number.isFinite(nx) || !Number.isFinite(ny)) return
-  starPositions[recordId] = { x: nx, y: ny }
-  schedulePersistStarPositions()
-}
-
-/**
- * clusterId：稳定分簇，新增记录只进入「时间上新的一簇」或新开一簇，不会重算旧记录的簇归属。
- * 种子数据：0～6 为第一簇，7～13 为第二簇。
- */
-const seedRecords = [
+/** 未登录：仅展示这 5 条占位，不写本地、不累计演示添加 */
+const GUEST_RECORDS = [
   {
-    id: '1',
+    id: 'guest-1',
     title: 'Vue Router 嵌套路由',
     summary: 'children + RouterView 布局拆分',
     createdAt: '2025-03-20T10:00:00.000Z',
     clusterId: 0,
   },
   {
-    id: '2',
+    id: 'guest-2',
     title: '收件箱原则',
     summary: '先捕获再分类，降低摩擦',
     createdAt: '2025-03-18T14:30:00.000Z',
     clusterId: 0,
   },
   {
-    id: '3',
+    id: 'guest-3',
     title: 'History 与 404',
     summary: '静态托管需回退 index.html',
     createdAt: '2025-03-15T09:00:00.000Z',
     clusterId: 0,
   },
   {
-    id: '4',
+    id: 'guest-4',
     title: '碎片化阅读',
     summary: '主题复盘代替无限收藏',
     createdAt: '2025-03-10T20:00:00.000Z',
     clusterId: 0,
   },
   {
-    id: '5',
+    id: 'guest-5',
     title: '设计令牌',
     summary: 'theme.js 与 CSS 变量统一色板',
     createdAt: '2025-03-08T12:00:00.000Z',
     clusterId: 0,
   },
-  {
-    id: '6',
-    title: '像素字与可读性',
-    summary: 'boutique 与 ui 栈分工',
-    createdAt: '2025-03-05T08:00:00.000Z',
-    clusterId: 0,
-  },
-  {
-    id: '7',
-    title: '北斗占位星 7',
-    summary: '凑满北斗示例',
-    createdAt: '2025-03-03T16:00:00.000Z',
-    clusterId: 0,
-  },
-  {
-    id: '8',
-    title: '星簇数据 8',
-    summary: '第二簇起点',
-    createdAt: '2025-03-02T12:00:00.000Z',
-    clusterId: 1,
-  },
-  {
-    id: '9',
-    title: '星簇 9',
-    summary: 'MST 连线示意',
-    createdAt: '2025-03-01T10:00:00.000Z',
-    clusterId: 1,
-  },
-  {
-    id: '10',
-    title: '星簇 10',
-    summary: '同一区域聚类',
-    createdAt: '2025-02-28T18:00:00.000Z',
-    clusterId: 1,
-  },
-  {
-    id: '11',
-    title: '星簇 11',
-    summary: '5~12 颗/簇',
-    createdAt: '2025-02-27T09:00:00.000Z',
-    clusterId: 1,
-  },
-  {
-    id: '12',
-    title: '星簇 12',
-    summary: 'Prim 最小生成树',
-    createdAt: '2025-02-26T15:00:00.000Z',
-    clusterId: 1,
-  },
-  {
-    id: '13',
-    title: '星簇 13',
-    summary: '旧记录先入簇',
-    createdAt: '2025-02-25T11:00:00.000Z',
-    clusterId: 1,
-  },
-  {
-    id: '14',
-    title: '星簇 14',
-    summary: '画布可拖动',
-    createdAt: '2025-02-24T08:00:00.000Z',
-    clusterId: 1,
-  },
 ]
 
-const records = ref(seedRecords.map((r) => ({ ...r })))
+function readJson(key, fallback) {
+  if (typeof localStorage === 'undefined') return fallback
+  try {
+    const t = localStorage.getItem(key)
+    return t ? JSON.parse(t) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeJson(key, value) {
+  if (typeof localStorage === 'undefined') return
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function bundleKey(usernameNorm) {
+  return `${BUNDLE_KEY_PREFIX}${usernameNorm}`
+}
+
+function draftKey(usernameNorm) {
+  return `${DRAFT_KEY_PREFIX}${usernameNorm}`
+}
+
+const records = ref([])
+const starPositions = reactive({})
+/** @type {import('vue').Ref<string[]>} */
+const userTags = ref([])
+
+/** 当前已加载数据所属用户（normalize 后）；null 表示访客视图 */
+let activeUsernameNorm = null
 
 let draftSeq = 0
+let persistTimer = null
+
+function clearReactiveObject(obj) {
+  for (const k of Object.keys(obj)) delete obj[k]
+}
+
+function cloneRecords(list) {
+  return list.map((r) => ({ ...r }))
+}
+
+function normalizeTagList(arr) {
+  if (!Array.isArray(arr)) return []
+  const seen = new Set()
+  const out = []
+  for (const x of arr) {
+    const t = String(x || '').trim()
+    if (!t) continue
+    const k = t.toLowerCase()
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push(t)
+  }
+  return out.sort((a, b) => a.localeCompare(b, 'zh'))
+}
+
+function applyGuestView() {
+  activeUsernameNorm = null
+  records.value = cloneRecords(GUEST_RECORDS)
+  clearReactiveObject(starPositions)
+  userTags.value = []
+}
+
+function loadUserBundle(usernameNorm) {
+  const raw = readJson(bundleKey(usernameNorm), null)
+  clearReactiveObject(starPositions)
+  if (raw && Array.isArray(raw.records)) {
+    records.value = cloneRecords(raw.records)
+    const sp = raw.starPositions
+    if (sp && typeof sp === 'object') {
+      for (const [k, v] of Object.entries(sp)) {
+        if (v && Number.isFinite(Number(v.x)) && Number.isFinite(Number(v.y))) {
+          starPositions[k] = { x: Number(v.x), y: Number(v.y) }
+        }
+      }
+    }
+    userTags.value = normalizeTagList(raw.tags)
+  } else {
+    records.value = []
+    userTags.value = []
+  }
+  activeUsernameNorm = usernameNorm
+}
+
+function persistActiveBundle() {
+  if (activeUsernameNorm == null) return
+  writeJson(bundleKey(activeUsernameNorm), {
+    records: cloneRecords(records.value),
+    starPositions: { ...starPositions },
+    tags: normalizeTagList(userTags.value),
+  })
+}
+
+function schedulePersist() {
+  if (activeUsernameNorm == null) return
+  clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => {
+    persistTimer = null
+    persistActiveBundle()
+  }, 80)
+}
+
+watch(
+  currentUser,
+  (u) => {
+    if (u?.username) {
+      loadUserBundle(normalizeUsername(u.username))
+    } else {
+      applyGuestView()
+    }
+  },
+  { immediate: true },
+)
+
+watch(() => records.value, schedulePersist, { deep: true })
+
+watch(
+  () =>
+    Object.keys(starPositions)
+      .map((k) => `${k}:${starPositions[k]?.x},${starPositions[k]?.y}`)
+      .join('|'),
+  () => schedulePersist(),
+)
+
+watch(userTags, schedulePersist, { deep: true })
 
 function maxClusterId(list) {
   let m = -1
@@ -151,6 +178,36 @@ function maxClusterId(list) {
     if (typeof c === 'number' && c > m) m = c
   }
   return m
+}
+
+/** 写入某条 record 在星盘 SVG 中的绝对坐标；登录用户会持久化 */
+export function setStarPosition(recordId, x, y) {
+  if (recordId == null) return
+  const nx = Number(x)
+  const ny = Number(y)
+  if (!Number.isFinite(nx) || !Number.isFinite(ny)) return
+  starPositions[recordId] = { x: nx, y: ny }
+  schedulePersist()
+}
+
+export function saveEditorDraft(payload) {
+  if (activeUsernameNorm == null) return
+  writeJson(draftKey(activeUsernameNorm), {
+    ...payload,
+    updatedAt: Date.now(),
+  })
+}
+
+export function loadEditorDraft() {
+  if (activeUsernameNorm == null) return null
+  return readJson(draftKey(activeUsernameNorm), null)
+}
+
+export function clearEditorDraft() {
+  if (activeUsernameNorm == null) return
+  try {
+    localStorage.removeItem(draftKey(activeUsernameNorm))
+  } catch (_) {}
 }
 
 export function useCompassRecords() {
@@ -166,11 +223,32 @@ export function useCompassRecords() {
     ),
   )
 
+  const canPersistRecords = computed(() => activeUsernameNorm != null)
+
+  function addUserTag(name) {
+    const t = String(name || '').trim()
+    if (!t) return { ok: false, message: '标签名不能为空' }
+    if (
+      userTags.value.some((x) => x.toLowerCase() === t.toLowerCase())
+    ) {
+      return { ok: false, message: '已有同名标签' }
+    }
+    userTags.value = normalizeTagList([...userTags.value, t])
+    return { ok: true, name: t }
+  }
+
   /**
-   * 新记录只加入「当前时间上最新一条」所在簇；该簇已满 12 则新建簇。
-   * 不重新划分历史记录。
+   * 从编辑器提交一条记录（Markdown、标签、内嵌本地图均为 data URL 存在 bodyMd 内）
+   * @returns {string|null} 新 record id，未创建则 null
    */
-  function addDemoRecord() {
+  function commitNewRecordFromEditor({ title, bodyMd, tags }) {
+    if (activeUsernameNorm == null) return null
+    const body = String(bodyMd || '')
+    const bodyTrim = body.trim()
+    const t = String(title || '').trim()
+    const finalTitle = t || '无标题'
+    if (!bodyTrim && !t) return null
+
     draftSeq += 1
     const now = new Date().toISOString()
     const list = [...records.value].sort(
@@ -183,12 +261,82 @@ export function useCompassRecords() {
       const lastCid =
         typeof newest.clusterId === 'number' ? newest.clusterId : 0
       const inLast = list.filter((r) => r.clusterId === lastCid).length
-      clusterId =
-        inLast >= 12 ? maxClusterId(list) + 1 : lastCid
+      clusterId = inLast >= 12 ? maxClusterId(list) + 1 : lastCid
+    }
+
+    const summary =
+      excerptFromMarkdown(body, 200) || finalTitle.slice(0, 120)
+
+    const rec = {
+      id: `r-${Date.now()}-${draftSeq}`,
+      title: finalTitle,
+      summary,
+      bodyMd: body,
+      tags: normalizeTagList(tags),
+      createdAt: now,
+      clusterId,
+    }
+    records.value.push(rec)
+    return rec.id
+  }
+
+  /**
+   * 按 id 更新已有记录（登录用户）
+   * @returns {boolean} 是否成功写入
+   */
+  function updateRecordFromEditor({ id, title, bodyMd, tags }) {
+    if (activeUsernameNorm == null || id == null) return false
+    const idx = records.value.findIndex((r) => r.id === id)
+    if (idx < 0) return false
+    const body = String(bodyMd || '')
+    const bodyTrim = body.trim()
+    const t = String(title || '').trim()
+    if (!bodyTrim && !t) return false
+    const finalTitle = t || '无标题'
+    const summary =
+      excerptFromMarkdown(body, 200) || finalTitle.slice(0, 120)
+    const prev = records.value[idx]
+    records.value[idx] = {
+      ...prev,
+      title: finalTitle,
+      summary,
+      bodyMd: body,
+      tags: normalizeTagList(tags),
+    }
+    schedulePersist()
+    return true
+  }
+
+  /** 删除记录及其星盘坐标（登录用户） */
+  function deleteRecordById(id) {
+    if (activeUsernameNorm == null || id == null) return false
+    const idx = records.value.findIndex((r) => r.id === id)
+    if (idx < 0) return false
+    records.value.splice(idx, 1)
+    delete starPositions[id]
+    schedulePersist()
+    return true
+  }
+
+  function addDemoRecord() {
+    if (activeUsernameNorm == null) return
+    draftSeq += 1
+    const now = new Date().toISOString()
+    const list = [...records.value].sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    )
+
+    let clusterId = 0
+    if (list.length > 0) {
+      const newest = list[list.length - 1]
+      const lastCid =
+        typeof newest.clusterId === 'number' ? newest.clusterId : 0
+      const inLast = list.filter((r) => r.clusterId === lastCid).length
+      clusterId = inLast >= 12 ? maxClusterId(list) + 1 : lastCid
     }
 
     records.value.push({
-      id: `demo-${Date.now()}`,
+      id: `r-${Date.now()}-${draftSeq}`,
       title: `新星辰 ${draftSeq}`,
       summary: '演示：星盘与时间线会同步出现新条目',
       createdAt: now,
@@ -201,7 +349,16 @@ export function useCompassRecords() {
     sortedNewestFirst,
     sortedOldestFirst,
     addDemoRecord,
+    commitNewRecordFromEditor,
+    updateRecordFromEditor,
+    deleteRecordById,
+    addUserTag,
+    userTags,
     starPositions,
     setStarPosition,
+    canPersistRecords,
+    saveEditorDraft,
+    loadEditorDraft,
+    clearEditorDraft,
   }
 }

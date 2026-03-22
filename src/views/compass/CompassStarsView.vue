@@ -1,32 +1,60 @@
 <template>
   <div
-    class="compass-stars-page relative h-full min-h-[420px] w-full overflow-hidden"
+    class="compass-stars-page relative h-full min-h-[420px] w-full min-w-0 overflow-visible"
     :style="{ backgroundColor: bgPrimary }"
   >
     <div
-      class="pointer-events-none absolute inset-0 z-[1] select-none"
-      aria-hidden="true"
+      class="stars-stage-shell absolute left-1/2 top-2 z-[10] w-[min(96vw,1000px)] max-w-[96vw] -translate-x-1/2 sm:top-2.5"
     >
+      <!--
+        取景器主题层：4:3 舞台与 ViewFinder_4By3 对齐。
+        位置微调 → 见下方 scoped 样式中 .stars-viewfinder-wrap 的 CSS 变量。
+      -->
       <div
-        class="stars-bg-hand stars-bg-hand--right absolute bottom-[6%] right-0 flex w-[min(22vw,200px)] flex-col items-center justify-end sm:w-[min(24vw,260px)]"
+        class="stars-viewfinder-wrap relative aspect-[4/3] w-full overflow-visible"
       >
-        <div
-          class="flex aspect-[3/5] w-[88%] flex-col items-center justify-center rounded-lg border border-dashed border-white/25 bg-white/[0.04] text-center"
-        >
-          <span class="px-2 text-[9px] leading-tight text-white/40"
-            >透明 PNG</span
-          >
-          <span class="font-boutique-primary text-[10px] text-white/55"
-            >右手构图</span
-          >
+        <!--
+          取景器 PNG 与双手共用 .stars-viewfinder-raster：尺寸 = 4:3 舞台内 object-fit:contain 后的
+          实际线框区域（与 ViewFinder_4By3.png 像素比 1898:1252 一致）。手的 % 相对此框，而非星图主体。
+        -->
+        <div class="stars-viewfinder-frame" aria-hidden="true">
+          <!-- 线稿 PNG 单独一层 -->
+          <div class="stars-viewfinder-raster">
+            <img
+              class="stars-viewfinder-frame__img"
+              :src="viewFinderFrameUrl"
+              alt=""
+              draggable="false"
+            />
+          </div>
+          <!-- 双手在 PNG 之上，避免角部线稿盖住手背/指尖 -->
+          <div v-show="showViewfinderHands" class="stars-viewfinder-hand-layer">
+            <!-- 右手在先、左手在后：大宽度时两图包络易重叠，后绘制的在上，避免右手盖住左手 -->
+            <div
+              class="stars-viewfinder-hand stars-viewfinder-hand--right"
+              aria-hidden="true"
+            >
+              <img
+                class="stars-viewfinder-hand__img"
+                :src="viewFinderHandRightUrl"
+                alt=""
+                draggable="false"
+              />
+            </div>
+            <div
+              class="stars-viewfinder-hand stars-viewfinder-hand--left"
+              aria-hidden="true"
+            >
+              <img
+                class="stars-viewfinder-hand__img"
+                :src="viewFinderHandLeftUrl"
+                alt=""
+                draggable="false"
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div
-      class="stars-stage-shell absolute left-1/2 top-[48%] z-[10] w-[min(92vw,920px)] max-w-[92vw] -translate-x-1/2 -translate-y-1/2"
-    >
-      <div class="relative aspect-[4/3] w-full">
         <div
           class="compass-zoom-bar pointer-events-none absolute right-0 top-[20%] z-[25] flex h-[60%] w-[min(36vw,176px)] max-w-[min(176px,calc(100%-6px))] translate-x-0 flex-col items-end pr-1 sm:w-[min(30vw,164px)] sm:max-w-[min(164px,calc(100%-8px))]"
           role="group"
@@ -127,33 +155,8 @@
         </div>
 
         <div
-          class="pointer-events-none absolute inset-0 z-[15]"
-          aria-hidden="true"
-        >
-          <span class="vf-corner vf-corner--tl" />
-          <span class="vf-corner vf-corner--tr" />
-          <span class="vf-corner vf-corner--bl" />
-          <span class="vf-corner vf-corner--br" />
-        </div>
-
-        <div
-          class="pointer-events-none absolute left-0 top-0 z-[20] flex w-[min(18vw,160px)] -translate-x-[6%] -translate-y-[10%] flex-col items-start sm:w-[min(20vw,200px)]"
-        >
-          <div
-            class="flex aspect-[3/5] w-full flex-col items-center justify-center rounded-lg border border-dashed border-white/25 bg-white/[0.06] text-center shadow-sm"
-          >
-            <span class="px-2 text-[9px] leading-tight text-white/40"
-              >透明 PNG</span
-            >
-            <span class="font-boutique-primary text-[10px] text-white/55"
-              >左手构图</span
-            >
-          </div>
-        </div>
-
-        <div
           ref="clipRef"
-          class="stars-stage-clip absolute inset-0 overflow-hidden rounded-md border border-white/25 bg-[#201E28] shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+          class="stars-stage-clip stars-stage-clip--inset absolute z-[12] overflow-hidden rounded-md border border-white/25 bg-[#201E28] shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
           :class="clipStageCursorClass"
           @mousedown.prevent="onPanStart"
           @touchstart.prevent="onTouchStart"
@@ -228,8 +231,9 @@
                   :class="{
                     'record-star--pulse': pulseStarRecordId === node.record.id,
                   }"
-                  @mouseenter="onStarEnter(node.record.id)"
-                  @mouseleave="onStarLeave"
+                  @mouseenter="onStarGroupMouseEnter(node.record, $event)"
+                  @mousemove="onStarGroupMouseMove($event)"
+                  @mouseleave="onStarGroupMouseLeave"
                 >
                   <circle
                     :cx="node.x"
@@ -269,16 +273,29 @@
 
     <div
       v-if="selected"
-      class="absolute bottom-4 left-4 right-4 z-[30] rounded-md border border-white/25 bg-black/55 p-3 text-left text-sm text-white backdrop-blur-md sm:left-auto sm:right-4 sm:w-[min(22rem,90vw)]"
+      class="absolute bottom-4 left-4 right-4 z-[30] max-h-[min(52vh,420px)] overflow-y-auto rounded-md border border-white/25 bg-black/55 p-3 text-left text-sm text-white backdrop-blur-md sm:left-auto sm:right-4 sm:w-[min(22rem,90vw)]"
       @mousedown.stop
     >
       <div class="flex items-start justify-between gap-2">
-        <div>
+        <div class="min-w-0 flex-1">
           <p class="font-boutique-primary text-base">{{ selected.title }}</p>
           <p class="mt-1 text-xs text-white/65">{{ selected.summary }}</p>
+          <div v-if="selected.tags?.length" class="mt-2 flex flex-wrap gap-1">
+            <span
+              v-for="tg in selected.tags"
+              :key="tg"
+              class="rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-[9px] text-white/80"
+              >{{ tg }}</span
+            >
+          </div>
           <p class="mt-2 text-[10px] text-white/45">
             {{ formatDate(selected.createdAt) }}
           </p>
+          <div
+            v-if="selected.bodyMd"
+            class="compass-star-detail-md mt-3 border-t border-white/15 pt-2 text-xs leading-relaxed text-white/75"
+            v-html="renderSimpleMarkdown(selected.bodyMd)"
+          />
         </div>
         <button
           type="button"
@@ -290,6 +307,40 @@
         </button>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="starHoverTip"
+        class="compass-star-hover-tip font-boutique-primary pointer-events-none fixed z-[1040] w-[min(16rem,calc(100vw-1.5rem))] rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-left shadow-lg backdrop-blur-md"
+        :style="starHoverTipStyle"
+        role="tooltip"
+      >
+        <p
+          class="text-[11px] font-medium leading-snug text-white/95 sm:text-xs"
+        >
+          {{ starHoverTip.record.title || "无标题" }}
+        </p>
+        <p class="mt-1 text-[9px] text-white/50 sm:text-[10px]">
+          {{ formatDate(starHoverTip.record.createdAt) }}
+        </p>
+        <div v-if="starHoverTipTags.length" class="mt-1.5 flex flex-wrap gap-1">
+          <span
+            v-for="tg in starHoverTipTags"
+            :key="tg"
+            class="rounded-full border border-white/22 bg-white/[0.08] px-1.5 py-0.5 text-[8px] text-white/75 sm:text-[9px]"
+            >{{ tg }}</span
+          >
+          <span
+            v-if="starHoverTipMoreTagCount > 0"
+            class="text-[8px] text-white/45 sm:text-[9px]"
+            >+{{ starHoverTipMoreTagCount }}</span
+          >
+        </div>
+        <p v-else class="mt-1 text-[9px] italic text-white/38 sm:text-[10px]">
+          无标签
+        </p>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -303,10 +354,17 @@ import {
   onUnmounted,
   nextTick,
   shallowRef,
+  inject,
 } from "vue";
 import { getColor } from "@/config/theme.js";
 import { useCompassRecords } from "@/composables/useCompassRecords.js";
+import { useCompassAuth } from "@/composables/useCompassAuth.js";
+import { renderSimpleMarkdown } from "@/utils/simpleMarkdown.js";
 import windbellUrl from "@/assets/music/windbell.mp3";
+import gearRotationUrl from "@/assets/music/GearRotation.mp3";
+import viewFinderFrameUrl from "@/assets/img/ViewFinder_4By3.png";
+import viewFinderHandLeftUrl from "@/assets/img/ViewFinder_Hand_00.png";
+import viewFinderHandRightUrl from "@/assets/img/ViewFinder_Hand_01.png";
 
 const CANVAS_W = 3400;
 const CANVAS_H = 2200;
@@ -314,6 +372,47 @@ const CANVAS_H = 2200;
 const bgPrimary = getColor("background", "primary");
 const { records, sortedOldestFirst, starPositions, setStarPosition } =
   useCompassRecords();
+const { isLoggedIn } = useCompassAuth();
+
+const compassRecordEditor = inject("compassRecordEditor", null);
+const showViewfinderHands = inject("compassShowViewfinderHands", ref(true));
+
+/** 鼠标悬停星点时的缩略预览（视口坐标） */
+const starHoverTip = ref(null);
+const HOVER_TIP_TAG_MAX = 6;
+
+const starHoverTipTags = computed(() => {
+  const r = starHoverTip.value?.record;
+  const tags = Array.isArray(r?.tags) ? r.tags : [];
+  return tags.slice(0, HOVER_TIP_TAG_MAX);
+});
+
+const starHoverTipMoreTagCount = computed(() => {
+  const r = starHoverTip.value?.record;
+  const tags = Array.isArray(r?.tags) ? r.tags : [];
+  return Math.max(0, tags.length - HOVER_TIP_TAG_MAX);
+});
+
+const starHoverTipStyle = computed(() => {
+  const t = starHoverTip.value;
+  if (!t) return {};
+  const pad = 14;
+  return {
+    left: `${t.x + pad}px`,
+    top: `${t.y + pad}px`,
+  };
+});
+
+watch(
+  records,
+  () => {
+    const s = selected.value;
+    if (s && !records.value.some((r) => r.id === s.id)) {
+      selected.value = null;
+    }
+  },
+  { deep: true },
+);
 
 const clipRef = ref(null);
 const pan = reactive({ x: 0, y: 0 });
@@ -650,6 +749,7 @@ function setScaleTowardPoint(newS, viewportMx, viewportMy) {
   pan.x = viewportMx - wx * clamped;
   pan.y = viewportMy - wy * clamped;
   scale.value = clamped;
+  playGearRotationThrottled();
 }
 
 function setScaleTowardCenter(newS) {
@@ -683,6 +783,29 @@ function onStarLeave() {
   scheduleDeferredHubClear();
 }
 
+function onStarGroupMouseEnter(record, e) {
+  onStarEnter(record.id);
+  starHoverTip.value = {
+    record,
+    x: e.clientX,
+    y: e.clientY,
+  };
+}
+
+function onStarGroupMouseMove(e) {
+  if (!starHoverTip.value) return;
+  starHoverTip.value = {
+    ...starHoverTip.value,
+    x: e.clientX,
+    y: e.clientY,
+  };
+}
+
+function onStarGroupMouseLeave() {
+  starHoverTip.value = null;
+  onStarLeave();
+}
+
 function clearStarLongPressTimer() {
   if (longPressTimer) {
     clearTimeout(longPressTimer);
@@ -694,6 +817,20 @@ function playWindbell() {
   try {
     const a = new Audio(windbellUrl);
     a.volume = 0.88;
+    void a.play();
+  } catch (_) {}
+}
+
+let gearSoundLastPlay = 0;
+const GEAR_SOUND_MIN_INTERVAL_MS = 72;
+
+function playGearRotationThrottled() {
+  const now = Date.now();
+  if (now - gearSoundLastPlay < GEAR_SOUND_MIN_INTERVAL_MS) return;
+  gearSoundLastPlay = now;
+  try {
+    const a = new Audio(gearRotationUrl);
+    a.volume = 0.42;
     void a.play();
   } catch (_) {}
 }
@@ -742,6 +879,7 @@ function onRecordStarPointerDown(record, e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
   const recordId = record.id;
   if (!starPositions[recordId]) return;
+  starHoverTip.value = null;
   clearStarLongPressTimer();
   releaseStarPointerCapture();
   cancelEdgeRetractInFlight();
@@ -799,8 +937,15 @@ function finishStarPointerOnRelease(clientX, clientY) {
   if (starPointer.pending && starPointer.pendingRecord) {
     playWindbell();
     if (isShortTap) {
-      selected.value = starPointer.pendingRecord;
-      triggerStarPulse(starPointer.pendingRecord.id);
+      const rec = starPointer.pendingRecord;
+      const isGuestStar = rec.id != null && String(rec.id).startsWith("guest-");
+      if (isLoggedIn.value && !isGuestStar) {
+        compassRecordEditor?.openEdit?.(rec.id);
+        selected.value = null;
+      } else {
+        selected.value = rec;
+      }
+      triggerStarPulse(rec.id);
     }
     resetStarPointer();
   }
@@ -1792,33 +1937,122 @@ watch(
   animation: record-star-pulse 0.32s ease-out;
 }
 
-.vf-corner {
+/*
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 取景器主题 · 位置微调（改 .stars-viewfinder-wrap 里的变量即可）
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * --stars-inner-clip-inset  星图主体相对外框的内缩（越小则取景器相对主体越大）
+ * --vf-frame-*     ViewFinder_4By3.png 外框相对 4:3 舞台的内边距/偏移
+ * --vf-hand-width   左右手共用宽度（相对 hand-layer = 取景器 raster 宽）
+ * --vf-hand-left-* / --vf-hand-right-* 角位与 transform；勿把宽度设到 ~100% 再加大幅负偏移
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
+.stars-viewfinder-wrap {
+  /* 中心星图画布：小于外框，使取景器线框套在「外面」 */
+  --stars-inner-clip-inset: 8%;
+  /* 主取景器框（默认略放大，整体大于内缩后的主体） */
+  --vf-frame-top: -2%;
+  --vf-frame-right: -2%;
+  --vf-frame-bottom: -2%;
+  --vf-frame-left: -2%;
+  --vf-frame-transform: translateZ(0) scale(1.1);
+  --vf-frame-transform-origin: center center;
+  /*
+   * 单手宽度：相对 .stars-viewfinder-hand-layer 的宽度（= 取景器 PNG 显示宽）。
+   * 勿用 min(100%, 极大px)：接近 100% 再叠加负 left/right 会撑开 main 横向滚动，竖条滚动条会随手势显隐抖动。
+   */
+  --vf-hand-width: min(100%, 960px);
+  --vf-hand-left-left: -22%;
+  --vf-hand-left-top: -24%;
+  --vf-hand-left-transform: translate(2%, 2%) rotate(0deg);
+  --vf-hand-left-transform-origin: 84% 76%;
+  --vf-hand-right-right: -22%;
+  --vf-hand-right-bottom: -24%;
+  --vf-hand-right-transform: translate(-2%, -2%) rotate(0deg);
+  --vf-hand-right-transform-origin: 16% 24%;
+}
+
+.stars-viewfinder-wrap > .stars-stage-clip--inset {
+  inset: var(--stars-inner-clip-inset);
+}
+
+.stars-viewfinder-frame {
   position: absolute;
-  width: 32px;
-  height: 32px;
-  border-color: rgba(255, 255, 255, 0.45);
-  border-style: solid;
+  z-index: 16;
+  overflow: visible;
+  pointer-events: none;
+  top: var(--vf-frame-top);
+  right: var(--vf-frame-right);
+  bottom: var(--vf-frame-bottom);
+  left: var(--vf-frame-left);
+  transform: var(--vf-frame-transform);
+  transform-origin: var(--vf-frame-transform-origin);
+}
+
+/*
+ * 与舞台 4/3 内 object-fit:contain 一致：ViewFinder_4By3 宽于 4/3，故上下留空、宽贴满。
+ * h_raster / h_frame = (4/3) * (1252/1898)
+ */
+.stars-viewfinder-raster,
+.stars-viewfinder-hand-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  width: 100%;
+  height: calc(100% * 4 * 1252 / (3 * 1898));
+  transform: translateY(-50%);
+  pointer-events: none;
+  overflow: visible;
+}
+
+.stars-viewfinder-raster {
+  z-index: 0;
+}
+
+.stars-viewfinder-hand-layer {
+  z-index: 2;
+}
+
+.stars-viewfinder-frame__img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  object-position: center;
+  user-select: none;
+}
+
+.stars-viewfinder-hand-layer .stars-viewfinder-hand {
+  position: absolute;
   pointer-events: none;
 }
-.vf-corner--tl {
-  left: 0;
-  top: 0;
-  border-width: 2px 0 0 2px;
+
+.stars-viewfinder-hand__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
 }
-.vf-corner--tr {
-  right: 0;
-  top: 0;
-  border-width: 2px 2px 0 0;
+
+.stars-viewfinder-hand-layer .stars-viewfinder-hand--left {
+  z-index: 2;
+  left: var(--vf-hand-left-left);
+  top: var(--vf-hand-left-top);
+  width: var(--vf-hand-width);
+  transform: var(--vf-hand-left-transform);
+  transform-origin: var(--vf-hand-left-transform-origin);
 }
-.vf-corner--bl {
-  left: 0;
-  bottom: 0;
-  border-width: 0 0 2px 2px;
-}
-.vf-corner--br {
-  right: 0;
-  bottom: 0;
-  border-width: 0 2px 2px 0;
+
+.stars-viewfinder-hand-layer .stars-viewfinder-hand--right {
+  z-index: 1;
+  right: var(--vf-hand-right-right);
+  bottom: var(--vf-hand-right-bottom);
+  width: var(--vf-hand-width);
+  transform: var(--vf-hand-right-transform);
+  transform-origin: var(--vf-hand-right-transform-origin);
 }
 
 .compass-zoom-bar__viewport {
@@ -1838,5 +2072,34 @@ watch(
     monospace
   );
   font-weight: 500;
+}
+
+.compass-star-detail-md :deep(.compass-md-root) {
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+.compass-star-detail-md :deep(.compass-md-img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  margin: 0.35rem 0;
+}
+.compass-star-detail-md :deep(.compass-md-pre) {
+  margin: 0.35rem 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 0.35rem;
+  font-size: 0.65rem;
+  overflow: auto;
+}
+.compass-star-detail-md :deep(.compass-md-p) {
+  margin: 0 0 0.35rem;
+}
+.compass-star-detail-md :deep(.compass-md-h1),
+.compass-star-detail-md :deep(.compass-md-h2),
+.compass-star-detail-md :deep(.compass-md-h3) {
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
 }
 </style>
