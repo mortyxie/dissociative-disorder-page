@@ -1,7 +1,7 @@
 // 此脚本控制哈雷彗星解密
 
 // 导入音乐控制器
-import { playMusic } from './MusicController.js';
+import { playMusic } from "./MusicController.js";
 
 // 解密状态管理
 let puzzleState = {
@@ -9,21 +9,20 @@ let puzzleState = {
   isSolved: false,
   attempts: 0,
   startTime: null,
-  solveTime: null
+  solveTime: null,
 };
 
 // 正确答案
-const CORRECT_ANSWER = "20710729";
+const CORRECT_ANSWER = "20610729";
 
 // 初始化哈雷彗星解密功能
 function initHalleysCometPuzzle() {
-  
   puzzleState.isInitialized = true;
   puzzleState.startTime = Date.now();
-  
+
   // 从本地存储加载尝试次数
   try {
-    const saved = localStorage.getItem('halleysCometAttempts');
+    const saved = localStorage.getItem("halleysCometAttempts");
     if (saved) {
       puzzleState.attempts = parseInt(saved, 10) || 0;
     } else {
@@ -32,9 +31,9 @@ function initHalleysCometPuzzle() {
   } catch (error) {
     puzzleState.attempts = 0;
   }
-  
+
   puzzleState.isSolved = false;
-  
+
   return true;
 }
 
@@ -44,16 +43,16 @@ function validateAnswer(inputAnswer) {
     console.warn("解密系统未初始化");
     return false;
   }
-  
+
   puzzleState.attempts++;
-  
+
   // 持久化尝试次数
-  localStorage.setItem('halleysCometAttempts', puzzleState.attempts.toString());
-  
+  localStorage.setItem("halleysCometAttempts", puzzleState.attempts.toString());
+
   if (inputAnswer === CORRECT_ANSWER) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -62,44 +61,49 @@ function solveHalleysPuzzle() {
   if (puzzleState.isSolved) {
     return;
   }
-  
+
   puzzleState.isSolved = true;
   puzzleState.solveTime = Date.now();
-  
-  const solveTimeSeconds = Math.round((puzzleState.solveTime - puzzleState.startTime) / 1000);
+
+  const solveTimeSeconds = Math.round(
+    (puzzleState.solveTime - puzzleState.startTime) / 1000,
+  );
   // 🎵 播放庆祝音乐
   try {
     playMusic();
   } catch (error) {
     console.error("音乐播放失败:", error);
   }
-  
+
   // 触发解密成功事件
-  const event = new CustomEvent('halleysCometSolved', {
+  const event = new CustomEvent("halleysCometSolved", {
     detail: {
       answer: CORRECT_ANSWER,
       attempts: puzzleState.attempts,
       solveTime: solveTimeSeconds,
-      timestamp: puzzleState.solveTime
-    }
+      timestamp: puzzleState.solveTime,
+    },
   });
-  
+
   window.dispatchEvent(event);
-  
+
   // 保存解密状态到本地存储
-  localStorage.setItem('halleysCometPuzzleSolved', JSON.stringify({
-    solved: true,
-    solveTime: puzzleState.solveTime,
-    attempts: puzzleState.attempts
-  }));
-  
+  localStorage.setItem(
+    "halleysCometPuzzleSolved",
+    JSON.stringify({
+      solved: true,
+      solveTime: puzzleState.solveTime,
+      attempts: puzzleState.attempts,
+    }),
+  );
+
   // 清除尝试次数记录
-  localStorage.removeItem('halleysCometAttempts');
-  
+  localStorage.removeItem("halleysCometAttempts");
+
   return {
     success: true,
     attempts: puzzleState.attempts,
-    solveTime: solveTimeSeconds
+    solveTime: solveTimeSeconds,
   };
 }
 
@@ -114,10 +118,10 @@ function isPuzzleSolved() {
   if (puzzleState.isSolved) {
     return true;
   }
-  
+
   // 检查本地存储
   try {
-    const saved = localStorage.getItem('halleysCometPuzzleSolved');
+    const saved = localStorage.getItem("halleysCometPuzzleSolved");
     if (saved) {
       const data = JSON.parse(saved);
       if (data.solved) {
@@ -128,7 +132,7 @@ function isPuzzleSolved() {
   } catch (error) {
     console.warn("读取解密状态失败:", error);
   }
-  
+
   return false;
 }
 
@@ -139,11 +143,11 @@ function resetPuzzle() {
     isSolved: false,
     attempts: 0,
     startTime: null,
-    solveTime: null
+    solveTime: null,
   };
-  
-  localStorage.removeItem('halleysCometPuzzleSolved');
-  localStorage.removeItem('halleysCometAttempts');
+
+  localStorage.removeItem("halleysCometPuzzleSolved");
+  localStorage.removeItem("halleysCometAttempts");
 }
 
 // 获取提示信息
@@ -161,5 +165,5 @@ export {
   isPuzzleSolved,
   resetPuzzle,
   getHint,
-  CORRECT_ANSWER
-}
+  CORRECT_ANSWER,
+};

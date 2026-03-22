@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', redirect: '/homi' },
+  /** 根路径进入 homi，命名重定向在带 BASE_URL 部署时与 path 重定向一致且更稳妥 */
+  { path: '/', redirect: { name: 'homi' } },
   {
     path: '/homi',
     name: 'homi',

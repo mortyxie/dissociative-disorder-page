@@ -18,8 +18,8 @@ const countdownStyle = computed(() => {
   return createAspectRatioAwareCountdownStyle(device);
 });
 
-// 目标时间戳: 2071年7月29日 00:00:00 (本地时间)
-const targetTimestamp = new Date("2071-07-29T00:00:00").getTime();
+// 目标时间戳: 2061年7月29日 00:00:00 (本地时间)
+const targetTimestamp = new Date("2061-07-29T00:00:00").getTime();
 
 // 响应式时间显示
 const formattedTime = ref("0000:00:00:00");
@@ -40,16 +40,16 @@ const updateCountdown = () => {
   // 计算天、时、分、秒
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
-    (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
   );
   const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
   // 格式化为 DDDD:HH:MM:SS
   formattedTime.value = `${String(days).padStart(4, "0")}:${String(
-    hours
+    hours,
   ).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(
-    seconds
+    seconds,
   ).padStart(2, "0")}`;
 };
 
